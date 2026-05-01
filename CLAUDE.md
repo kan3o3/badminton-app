@@ -6,10 +6,17 @@ PWA for managing badminton practice sessions — match generation, player queuin
 
 ```bash
 npm run dev      # Dev server (HMR)
+npm run dev -- --host  # LAN公開（スマホからアクセス可能）
 npm run build    # tsc -b && vite build (type-check then bundle)
 npm run lint     # ESLint flat config
 npm run preview  # Preview production build
 ```
+
+## Deployment
+
+GitHub Pages: https://kan3o3.github.io/badminton-app/
+`master` ブランチへの push で GitHub Actions が自動ビルド・デプロイする（`.github/workflows/deploy.yml`）。
+`vite.config.ts` の `base: '/badminton-app/'` が必須。
 
 ## Stack
 
@@ -32,6 +39,8 @@ src/
   utils/
     combinations.ts  # Match generation algorithm (50 attempts, penalty scoring)
     scoring.ts       # Player stats aggregation
+    id.ts            # UUID生成（非セキュアコンテキスト対応フォールバック付き）
+    sharing.ts       # 試合結果・ランキングのテキスト共有生成
   hooks/
     useTimer.ts   # RAF-based delta timer
     useStats.ts   # Player stats
@@ -45,6 +54,7 @@ src/
 
 ## Gotchas
 
+- **`crypto.randomUUID()` はHTTPで動作しない**: スマホから `http://` LAN IPでアクセスする場合、非セキュアコンテキストとして拒否される。`src/utils/id.ts` の `generateId()` が `Math.random()` フォールバックで対応。
 - **HashRouter**: Routes are `/#/home`, `/#/players`, etc. — intentional for static hosting.
 - **Zustand persist version 5**: Store key is `badminton-app-v1`. Version changes require migration logic or old localStorage data becomes stale.
 - **`finalizeMatch()` side effect**: Returns both teams to `waitingQueue` — caller must invoke `generateMatches()` separately to start the next round.
