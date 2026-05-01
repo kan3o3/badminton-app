@@ -82,6 +82,7 @@ export default function SettingsPage() {
 
   const handleReset = () => {
     resetSession()
+    useAppStore.setState({ currentRound: 0, activeMatches: [], waitingQueue: [] })
     setResetOpen(false)
   }
 

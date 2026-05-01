@@ -26,8 +26,5 @@ export const createHistorySlice: StateCreator<HistorySlice> = (set) => ({
     set({
       gameHistory: [],
       sessionDate: todayString(),
-      currentRound: 0,
-      activeMatches: [],
-      waitingQueue: [],
     }),
 })
