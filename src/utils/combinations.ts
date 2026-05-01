@@ -147,10 +147,23 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
     let bestSideA = bestCandidates.slice(0, ppm / 2)
     let bestSideB = bestCandidates.slice(ppm / 2)
 
+    // プール内で両メンバーが揃っている固定ペアを探す（ダブルスのみ）
+    const activePair = courtFormat === 'doubles'
+      ? pairs.find((pair) => pair.playerIds.every((id) => pool.includes(id)))
+      : undefined
+
     for (let attempt = 0; attempt < GENERATION_ATTEMPTS; attempt++) {
-      // 最初の試行は必ず strict top-ppm（公平性の基準として）
-      const candidates =
-        attempt === 0 ? pool.slice(0, ppm) : shuffle(pool).slice(0, ppm)
+      // 固定ペアがプール内に存在する場合、両メンバーを必ず候補に含める
+      let candidates: string[]
+      if (activePair) {
+        const pairIds = activePair.playerIds
+        const rest = pool.filter((id) => !pairIds.includes(id))
+        const fillers = attempt === 0 ? rest.slice(0, ppm - 2) : shuffle(rest).slice(0, ppm - 2)
+        candidates = [...pairIds, ...fillers]
+      } else {
+        // 最初の試行は必ず strict top-ppm（公平性の基準として）
+        candidates = attempt === 0 ? pool.slice(0, ppm) : shuffle(pool).slice(0, ppm)
+      }
 
       // スキップペナルティ：試合数の少ない選手を飛ばすほどコスト増
       const avgIdx =
