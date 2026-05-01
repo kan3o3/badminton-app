@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Hiragino Sans', 'Meiryo', sans-serif;
+    background-color: #f3f4f6;
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #root {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+  }
+}
