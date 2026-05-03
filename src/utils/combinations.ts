@@ -148,24 +148,59 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
     let useMixedMode = false
     let malePool: string[] = []
     let femalePool: string[] = []
+    // ミックスモード用固定ペア（男女1組）
+    let mixedActivePair: FixedPair | undefined
 
     if (courtGenderFmt === 'mens') {
       const males = remaining.filter((id) => playerMap.get(id)?.gender === 'male')
-      pool = males.length >= ppm
-        ? males.slice(0, ppm + SELECTION_WINDOW)
-        : remaining.slice(0, ppm + SELECTION_WINDOW) // 人数不足時フォールバック
+      if (males.length >= ppm) {
+        // 固定ペアのメンバーを先頭に確保したうえでプール構築
+        const activePairInMales = pairs.find((p) => p.playerIds.every((id) => males.includes(id)))
+        if (activePairInMales) {
+          const pairIds = activePairInMales.playerIds
+          const rest = males.filter((id) => !pairIds.includes(id))
+          pool = [...pairIds, ...rest].slice(0, ppm + SELECTION_WINDOW)
+        } else {
+          pool = males.slice(0, ppm + SELECTION_WINDOW)
+        }
+      } else {
+        pool = remaining.slice(0, ppm + SELECTION_WINDOW) // 人数不足時フォールバック
+      }
     } else if (courtGenderFmt === 'womens') {
       const females = remaining.filter((id) => playerMap.get(id)?.gender === 'female')
-      pool = females.length >= ppm
-        ? females.slice(0, ppm + SELECTION_WINDOW)
-        : remaining.slice(0, ppm + SELECTION_WINDOW)
+      if (females.length >= ppm) {
+        const activePairInFemales = pairs.find((p) => p.playerIds.every((id) => females.includes(id)))
+        if (activePairInFemales) {
+          const pairIds = activePairInFemales.playerIds
+          const rest = females.filter((id) => !pairIds.includes(id))
+          pool = [...pairIds, ...rest].slice(0, ppm + SELECTION_WINDOW)
+        } else {
+          pool = females.slice(0, ppm + SELECTION_WINDOW)
+        }
+      } else {
+        pool = remaining.slice(0, ppm + SELECTION_WINDOW)
+      }
     } else if (courtGenderFmt === 'mixed' && courtFormat === 'doubles') {
       const males = remaining.filter((id) => playerMap.get(id)?.gender === 'male')
       const females = remaining.filter((id) => playerMap.get(id)?.gender === 'female')
       if (males.length >= 2 && females.length >= 2) {
         useMixedMode = true
-        malePool = males.slice(0, 2 + SELECTION_WINDOW)
-        femalePool = females.slice(0, 2 + SELECTION_WINDOW)
+        // 男女ペアの固定ペアを検索し、メンバーをプール先頭に確保
+        mixedActivePair = pairs.find((p) => {
+          const [p1, p2] = p.playerIds
+          return (males.includes(p1) && females.includes(p2)) ||
+                 (females.includes(p1) && males.includes(p2))
+        })
+        if (mixedActivePair) {
+          const [p1, p2] = mixedActivePair.playerIds
+          const pairedMale = males.includes(p1) ? p1 : p2
+          const pairedFemale = females.includes(p1) ? p1 : p2
+          malePool = [pairedMale, ...males.filter((id) => id !== pairedMale)].slice(0, 2 + SELECTION_WINDOW)
+          femalePool = [pairedFemale, ...females.filter((id) => id !== pairedFemale)].slice(0, 2 + SELECTION_WINDOW)
+        } else {
+          malePool = males.slice(0, 2 + SELECTION_WINDOW)
+          femalePool = females.slice(0, 2 + SELECTION_WINDOW)
+        }
         pool = [] // mixed モードでは使用しない
       } else {
         pool = remaining.slice(0, ppm + SELECTION_WINDOW)
@@ -190,7 +225,7 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
       bestSideB = bestCandidates.slice(ppm / 2)
     }
 
-    // プール内で両メンバーが揃っている固定ペアを探す（ダブルス・非ミックスのみ）
+    // 非ミックスダブルス用固定ペア
     const activePair = !useMixedMode && courtFormat === 'doubles'
       ? pairs.find((pair) => pair.playerIds.every((id) => pool.includes(id)))
       : undefined
@@ -201,12 +236,28 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
       let sideB: string[]
 
       if (useMixedMode) {
-        // ミックスダブルス：1男 + 1女 を各サイドに確保
-        const pickedMales = attempt === 0 ? malePool.slice(0, 2) : shuffle(malePool).slice(0, 2)
-        const pickedFemales = attempt === 0 ? femalePool.slice(0, 2) : shuffle(femalePool).slice(0, 2)
-        candidates = [...pickedMales, ...pickedFemales]
-        sideA = [pickedMales[0], pickedFemales[0]]
-        sideB = [pickedMales[1], pickedFemales[1]]
+        if (mixedActivePair) {
+          // 固定ペア（男女）を同サイドに強制配置（プール先頭にペアメンバー確保済み）
+          const pairedMale = malePool[0]
+          const pairedFemale = femalePool[0]
+          const otherMale = attempt === 0
+            ? malePool[1]
+            : shuffle(malePool.slice(1))[0] ?? malePool[1]
+          const otherFemale = attempt === 0
+            ? femalePool[1]
+            : shuffle(femalePool.slice(1))[0] ?? femalePool[1]
+          candidates = [pairedMale, otherMale, pairedFemale, otherFemale]
+          ;[sideA, sideB] = Math.random() < 0.5
+            ? [[pairedMale, pairedFemale], [otherMale, otherFemale]]
+            : [[otherMale, otherFemale], [pairedMale, pairedFemale]]
+        } else {
+          // ミックスダブルス：1男 + 1女 を各サイドに確保
+          const pickedMales = attempt === 0 ? malePool.slice(0, 2) : shuffle(malePool).slice(0, 2)
+          const pickedFemales = attempt === 0 ? femalePool.slice(0, 2) : shuffle(femalePool).slice(0, 2)
+          candidates = [...pickedMales, ...pickedFemales]
+          sideA = [pickedMales[0], pickedFemales[0]]
+          sideB = [pickedMales[1], pickedFemales[1]]
+        }
       } else if (activePair) {
         // 固定ペアを両メンバー強制包含
         const pairIds = activePair.playerIds
