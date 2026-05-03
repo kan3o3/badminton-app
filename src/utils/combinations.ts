@@ -1,4 +1,4 @@
-import type { Player, ActiveMatch, CourtConfig, GameResult, FixedPair } from '@/types'
+import type { Player, ActiveMatch, CourtConfig, GameResult, FixedPair, GenderFormat } from '@/types'
 import {
   TEAMMATE_REPEAT_PENALTY,
   OPPONENT_REPEAT_PENALTY,
@@ -7,6 +7,8 @@ import {
   GENERATION_ATTEMPTS,
   SELECTION_WINDOW,
   GAME_COUNT_SKIP_PENALTY,
+  GENDER_MISMATCH_PENALTY,
+  GENDER_SINGLES_PENALTY,
 } from '@/constants'
 import { generateId } from '@/utils/id'
 
@@ -48,11 +50,18 @@ function avgRank(ids: string[], playerMap: Map<string, Player>): number {
   return values.reduce((a, b) => a + b, 0) / values.length
 }
 
+function genderOf(id: string, playerMap: Map<string, Player>) {
+  return playerMap.get(id)?.gender ?? null
+}
+
 function scoreAssignment(
   sideA: string[],
   sideB: string[],
   recentHistory: GameResult[],
-  playerMap: Map<string, Player>
+  playerMap: Map<string, Player>,
+  genderFormat: GenderFormat = 'any',
+  isDoubles: boolean = true,
+  rankEnabled: boolean = true
 ): number {
   let penalty = 0
 
@@ -76,8 +85,32 @@ function scoreAssignment(
   }
 
   // ── ランク差ペナルティ（二乗：差が大きいほど急激に増加）──
-  const rankDiff = Math.abs(avgRank(sideA, playerMap) - avgRank(sideB, playerMap))
-  penalty += rankDiff * rankDiff * RANK_IMBALANCE_FACTOR
+  if (rankEnabled) {
+    const rankDiff = Math.abs(avgRank(sideA, playerMap) - avgRank(sideB, playerMap))
+    penalty += rankDiff * rankDiff * RANK_IMBALANCE_FACTOR
+  }
+
+  // ── 性別ペナルティ ──
+  if (genderFormat !== 'any') {
+    if (isDoubles) {
+      // ダブルス：チーム構成が指定形式と合わない場合にペナルティ
+      for (const side of [sideA, sideB]) {
+        const genders = side.map((id) => genderOf(id, playerMap))
+        const hasMale = genders.includes('male')
+        const hasFemale = genders.includes('female')
+        if (genderFormat === 'mens' && hasFemale) penalty += GENDER_MISMATCH_PENALTY
+        else if (genderFormat === 'womens' && hasMale) penalty += GENDER_MISMATCH_PENALTY
+        else if (genderFormat === 'mixed' && !(hasMale && hasFemale)) penalty += GENDER_MISMATCH_PENALTY
+      }
+    }
+  }
+
+  // ── シングルス：なるべく同性対戦 ──
+  if (!isDoubles) {
+    const gA = genderOf(sideA[0], playerMap)
+    const gB = genderOf(sideB[0], playerMap)
+    if (gA !== null && gB !== null && gA !== gB) penalty += GENDER_SINGLES_PENALTY
+  }
 
   return penalty
 }
@@ -112,7 +145,7 @@ function constrainedSplitDoubles(group: string[], pairs: FixedPair[]): [string[]
 
 export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] {
   const { players, queue, courtConfig, gameHistory, timerDefaultSeconds, occupiedCourtIndices, pairs, roundNumber, rankBalanceEnabled } = params
-  const { totalCourts, format, courtFormats } = courtConfig
+  const { totalCourts, format, courtFormats, genderFormat, courtGenderFormats } = courtConfig
   const sessionDate = today()
 
   const gameCounts = countGamesToday(gameHistory, sessionDate)
@@ -135,6 +168,7 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
 
   for (const ci of availableCourts) {
     const courtFormat = courtFormats[ci] ?? format
+    const courtGenderFormat: GenderFormat = (courtGenderFormats ?? [])[ci] ?? (genderFormat ?? 'any')
     const ppm = courtFormat === 'doubles' ? 4 : 2
 
     if (remaining.length < ppm) continue
@@ -180,9 +214,10 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
         sideB = [candidates[1]]
       }
 
-      const rankScore = rankBalanceEnabled
-        ? scoreAssignment(sideA, sideB, recentHistory, playerMap)
-        : 0
+      const rankScore = scoreAssignment(
+        sideA, sideB, recentHistory, playerMap,
+        courtGenderFormat, courtFormat === 'doubles', rankBalanceEnabled
+      )
       const totalScore = rankScore + skipPenalty
 
       if (totalScore < bestTotalScore) {

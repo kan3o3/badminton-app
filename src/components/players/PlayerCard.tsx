@@ -63,10 +63,16 @@ export default function PlayerCard({ player, gameCount, onEdit, onDelete, onStat
           </span>
         </button>
 
-        {/* 名前・ランク */}
+        {/* 名前・ランク・性別 */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-gray-800 truncate">{player.name}</span>
+            {player.gender === 'male' && (
+              <span className="text-xs text-blue-500 font-bold leading-none">♂</span>
+            )}
+            {player.gender === 'female' && (
+              <span className="text-xs text-pink-500 font-bold leading-none">♀</span>
+            )}
             {player.rank && (
               <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-lg font-bold leading-none">
                 {player.rank}

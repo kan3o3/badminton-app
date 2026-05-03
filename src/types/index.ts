@@ -1,12 +1,15 @@
 export type PlayerStatus = 'active' | 'resting' | 'absent'
 export type SkillRank = 'A' | 'B' | 'C' | 'D' | null
 export type MatchFormat = 'doubles' | 'singles'
+export type Gender = 'male' | 'female' | null
+export type GenderFormat = 'any' | 'mens' | 'womens' | 'mixed'
 
 export interface Player {
   id: string
   name: string
   status: PlayerStatus
   rank: SkillRank
+  gender: Gender
   createdAt: number
 }
 
@@ -39,6 +42,8 @@ export interface CourtConfig {
   timerDefaultSeconds: number
   courtFormats: MatchFormat[]  // インデックス = courtIndex。未設定は format にフォールバック
   rankBalanceEnabled: boolean
+  genderFormat: GenderFormat          // デフォルト性別形式
+  courtGenderFormats: GenderFormat[]  // インデックス = courtIndex。未設定は genderFormat にフォールバック
 }
 
 export interface GameResult {
@@ -52,6 +57,33 @@ export interface GameResult {
   playedAt: number
   sessionDate: string
   roundNumber: number
+}
+
+export type TeamColor = 'red' | 'blue' | 'green' | 'yellow' | 'purple'
+
+export interface Team {
+  id: string
+  name: string
+  color: TeamColor
+  playerIds: string[]
+}
+
+export interface TeamCourtAssignment {
+  courtIndex: number
+  teamAPlayerIds: string[]
+  teamBPlayerIds: string[]
+  scoreA: number | null
+  scoreB: number | null
+  status: 'pending' | 'done'
+}
+
+export interface TeamMatch {
+  id: string
+  teamAId: string
+  teamBId: string
+  courts: TeamCourtAssignment[]
+  status: 'active' | 'completed'
+  createdAt: number
 }
 
 export interface PlayerStats {

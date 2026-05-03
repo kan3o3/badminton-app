@@ -1,11 +1,11 @@
 import type { StateCreator } from 'zustand'
-import type { Player, PlayerStatus, SkillRank } from '@/types'
+import type { Player, PlayerStatus, SkillRank, Gender } from '@/types'
 import { generateId } from '@/utils/id'
 
 export interface PlayerSlice {
   players: Player[]
-  addPlayer: (name: string, rank: SkillRank) => void
-  updatePlayer: (id: string, patch: Partial<Pick<Player, 'name' | 'rank'>>) => void
+  addPlayer: (name: string, rank: SkillRank, gender?: Gender) => void
+  updatePlayer: (id: string, patch: Partial<Pick<Player, 'name' | 'rank' | 'gender'>>) => void
   deletePlayer: (id: string) => void
   setPlayerStatus: (id: string, status: PlayerStatus) => void
 }
@@ -13,7 +13,7 @@ export interface PlayerSlice {
 export const createPlayerSlice: StateCreator<PlayerSlice> = (set) => ({
   players: [],
 
-  addPlayer: (name, rank) =>
+  addPlayer: (name, rank, gender = null) =>
     set((state) => ({
       players: [
         ...state.players,
@@ -22,6 +22,7 @@ export const createPlayerSlice: StateCreator<PlayerSlice> = (set) => ({
           name: name.trim(),
           status: 'active',
           rank,
+          gender,
           createdAt: Date.now(),
         },
       ],

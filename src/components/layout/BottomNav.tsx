@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 const tabs = [
   { to: '/home', label: '試合', icon: '🏸' },
   { to: '/players', label: '選手', icon: '👥' },
+  { to: '/team', label: 'チーム', icon: '🤝' },
   { to: '/history', label: '履歴', icon: '📊' },
   { to: '/settings', label: '設定', icon: '⚙️' },
 ]

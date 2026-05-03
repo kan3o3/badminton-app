@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
-import type { Player, PlayerStatus, SkillRank } from '@/types'
+import type { Player, PlayerStatus, SkillRank, Gender } from '@/types'
 import useAppStore from '@/store/useAppStore'
 import PlayerList from '@/components/players/PlayerList'
 import PlayerForm, { type PlayerFormHandle } from '@/components/players/PlayerForm'
@@ -52,14 +52,14 @@ export default function PlayersPage() {
     return counts
   }, [gameHistory, sessionDate])
 
-  const handleAdd = (name: string, rank: SkillRank) => {
-    addPlayer(name, rank)
+  const handleAdd = (name: string, rank: SkillRank, gender: Gender) => {
+    addPlayer(name, rank, gender)
     setAddOpen(false)
   }
 
-  const handleEdit = (name: string, rank: SkillRank) => {
+  const handleEdit = (name: string, rank: SkillRank, gender: Gender) => {
     if (!editTarget) return
-    updatePlayer(editTarget.id, { name, rank })
+    updatePlayer(editTarget.id, { name, rank, gender })
     setEditTarget(null)
   }
 
@@ -121,6 +121,7 @@ export default function PlayersPage() {
             ref={editFormRef}
             initialName={editTarget.name}
             initialRank={editTarget.rank}
+            initialGender={editTarget.gender ?? null}
             onSubmit={handleEdit}
           />
         )}

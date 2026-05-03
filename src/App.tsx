@@ -4,6 +4,7 @@ import HomePage from '@/pages/HomePage'
 import PlayersPage from '@/pages/PlayersPage'
 import SettingsPage from '@/pages/SettingsPage'
 import HistoryPage from '@/pages/HistoryPage'
+import TeamPage from '@/pages/TeamPage'
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/players" element={<PlayersPage />} />
+            <Route path="/team" element={<TeamPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/history" element={<HistoryPage />} />
           </Routes>

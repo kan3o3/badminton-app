@@ -1,7 +1,15 @@
 import { useState } from 'react'
+import type { GenderFormat } from '@/types'
 import useAppStore from '@/store/useAppStore'
 import Button from '@/components/common/Button'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
+
+const GENDER_FORMAT_OPTIONS: { value: GenderFormat; label: string }[] = [
+  { value: 'any', label: '指定なし' },
+  { value: 'mens', label: '男子' },
+  { value: 'womens', label: '女子' },
+  { value: 'mixed', label: 'ミックス' },
+]
 
 function Stepper({
   label,
@@ -75,6 +83,7 @@ export default function SettingsPage() {
   const courtConfig = useAppStore((s) => s.courtConfig)
   const setCourtConfig = useAppStore((s) => s.setCourtConfig)
   const setCourtFormat = useAppStore((s) => s.setCourtFormat)
+  const setGenderFormat = useAppStore((s) => s.setGenderFormat)
   const resetSession = useAppStore((s) => s.resetSession)
   const activeMatches = useAppStore((s) => s.activeMatches)
 
@@ -155,6 +164,58 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+
+        {/* 性別形式 */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm mt-2">
+          <p className="font-medium text-gray-700 mb-0.5">デフォルト性別形式</p>
+          <p className="text-xs text-gray-400 mb-3">コート個別に設定していない場合に適用</p>
+          <div className="flex gap-2">
+            {GENDER_FORMAT_OPTIONS.map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setCourtConfig({ genderFormat: value })}
+                className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                  (courtConfig.genderFormat ?? 'any') === value
+                    ? 'bg-green-600 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {courtConfig.totalCourts > 1 && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm mt-2">
+            <p className="font-medium text-gray-700 mb-3">コート別性別形式</p>
+            <div className="space-y-2.5">
+              {Array.from({ length: courtConfig.totalCourts }, (_, i) => {
+                const gfmt = (courtConfig.courtGenderFormats ?? [])[i] ?? (courtConfig.genderFormat ?? 'any')
+                return (
+                  <div key={i} className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 font-medium">コート {i + 1}</span>
+                    <div className="flex gap-1">
+                      {GENDER_FORMAT_OPTIONS.map(({ value, label }) => (
+                        <button
+                          key={value}
+                          onClick={() => setGenderFormat(i, value)}
+                          className={`px-2 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                            gfmt === value
+                              ? 'bg-green-600 text-white shadow-sm'
+                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
       {/* ── 試合設定 ── */}
       <SectionHeader>試合</SectionHeader>

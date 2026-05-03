@@ -6,7 +6,7 @@ PWA for managing badminton practice sessions — match generation, player queuin
 
 ```bash
 npm run dev      # Dev server (HMR)
-npm run dev -- --host  # LAN公開（スマホからアクセス可能）
+npm run dev -- --host  # LAN公開（スマホからアクセス可能、デフォルトポート5173）
 npm run build    # tsc -b && vite build (type-check then bundle)
 npm run lint     # ESLint flat config
 npm run preview  # Preview production build
@@ -31,6 +31,7 @@ src/
     courts/       # CourtCard (timer, scores, swap), ScoreInput, TimerDisplay
     players/      # PlayerCard, PlayerList, PlayerForm, PairSection, StatusBadge
     history/      # MatchHistoryCard, RankingTable
+    matches/      # WaitingList
     common/       # Button, Modal, ConfirmDialog
     layout/       # BottomNav
   store/
@@ -62,3 +63,4 @@ src/
 - **dnd-kit installed but unused**: `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` are in dependencies but not integrated yet.
 - **Match auto-finalize**: Generating a new round while matches are active closes them with their current scores.
 - **`initWaitingQueue()`**: Syncs queue from `active`-status players only; called on every player status change.
+- **固定ペア制約の動作**: `constrainedSplitDoubles()` はペアの両メンバーが候補プールに存在する場合のみ同サイドに固定する。`generateMatchAssignments()` の試みループでは、固定ペアが検出された場合に両メンバーを全50回の試みに強制包含することで確実に同サイド配置を保証する。
