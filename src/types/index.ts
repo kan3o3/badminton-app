@@ -42,6 +42,7 @@ export interface CourtConfig {
   timerDefaultSeconds: number
   courtFormats: MatchFormat[]  // インデックス = courtIndex。未設定は format にフォールバック
   rankBalanceEnabled: boolean
+  requireScore: boolean               // スコア記入必須
   genderFormat: GenderFormat          // デフォルト性別形式
   courtGenderFormats: GenderFormat[]  // インデックス = courtIndex。未設定は genderFormat にフォールバック
 }

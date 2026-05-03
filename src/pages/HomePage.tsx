@@ -62,7 +62,10 @@ export default function HomePage() {
   const minPpm = Array.from({ length: courtConfig.totalCourts }, (_, i) =>
     (courtConfig.courtFormats[i] ?? courtConfig.format) === 'doubles' ? 4 : 2
   ).reduce((a: number, b: number) => Math.min(a, b), 4)
-  const canGenerate = activePlayers.length >= minPpm
+  const unfinishedWithoutScore = (courtConfig.requireScore ?? false)
+    ? runningMatches.filter((m) => m.scoreA === null || m.scoreB === null)
+    : []
+  const canGenerate = activePlayers.length >= minPpm && unfinishedWithoutScore.length === 0
   const hasAnyPlayers = activeMatches.length > 0 || availableInQueue.length > 0
 
   const handleSelectPlayer = (id: string) => {
@@ -109,7 +112,12 @@ export default function HomePage() {
             </Button>
           )}
           {!swapMode && isViewingCurrent && (
-            <Button onClick={generateMatches} disabled={!canGenerate} size="sm">
+            <Button
+              onClick={generateMatches}
+              disabled={!canGenerate}
+              size="sm"
+              title={unfinishedWithoutScore.length > 0 ? 'スコアを入力してから生成してください' : undefined}
+            >
               🏸 生成
             </Button>
           )}

@@ -15,6 +15,7 @@ export const createCourtSlice: StateCreator<CourtSlice> = (set) => ({
     timerDefaultSeconds: 0,
     courtFormats: [],
     rankBalanceEnabled: true,
+    requireScore: false,
     genderFormat: 'any',
     courtGenderFormats: [],
   },

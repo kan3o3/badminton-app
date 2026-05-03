@@ -239,6 +239,17 @@ export default function SettingsPage() {
             onChange={(v) => setCourtConfig({ rankBalanceEnabled: v })}
           />
         </div>
+
+        <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="font-medium text-gray-700">スコア記入</p>
+            <p className="text-xs text-gray-400 mt-0.5">ONにするとスコア未入力のまま次の試合を生成できない</p>
+          </div>
+          <Toggle
+            value={courtConfig.requireScore ?? false}
+            onChange={(v) => setCourtConfig({ requireScore: v })}
+          />
+        </div>
       </div>
 
       {/* ── セッション ── */}
