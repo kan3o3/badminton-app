@@ -7,8 +7,6 @@ import {
   GENERATION_ATTEMPTS,
   SELECTION_WINDOW,
   GAME_COUNT_SKIP_PENALTY,
-  GENDER_MISMATCH_PENALTY,
-  GENDER_SINGLES_PENALTY,
 } from '@/constants'
 import { generateId } from '@/utils/id'
 
@@ -50,18 +48,12 @@ function avgRank(ids: string[], playerMap: Map<string, Player>): number {
   return values.reduce((a, b) => a + b, 0) / values.length
 }
 
-function genderOf(id: string, playerMap: Map<string, Player>) {
-  return playerMap.get(id)?.gender ?? null
-}
-
 function scoreAssignment(
   sideA: string[],
   sideB: string[],
   recentHistory: GameResult[],
   playerMap: Map<string, Player>,
-  genderFormat: GenderFormat = 'any',
-  isDoubles: boolean = true,
-  rankEnabled: boolean = true
+  rankEnabled: boolean
 ): number {
   let penalty = 0
 
@@ -88,28 +80,6 @@ function scoreAssignment(
   if (rankEnabled) {
     const rankDiff = Math.abs(avgRank(sideA, playerMap) - avgRank(sideB, playerMap))
     penalty += rankDiff * rankDiff * RANK_IMBALANCE_FACTOR
-  }
-
-  // ── 性別ペナルティ ──
-  if (genderFormat !== 'any') {
-    if (isDoubles) {
-      // ダブルス：チーム構成が指定形式と合わない場合にペナルティ
-      for (const side of [sideA, sideB]) {
-        const genders = side.map((id) => genderOf(id, playerMap))
-        const hasMale = genders.includes('male')
-        const hasFemale = genders.includes('female')
-        if (genderFormat === 'mens' && hasFemale) penalty += GENDER_MISMATCH_PENALTY
-        else if (genderFormat === 'womens' && hasMale) penalty += GENDER_MISMATCH_PENALTY
-        else if (genderFormat === 'mixed' && !(hasMale && hasFemale)) penalty += GENDER_MISMATCH_PENALTY
-      }
-    }
-  }
-
-  // ── シングルス：なるべく同性対戦 ──
-  if (!isDoubles) {
-    const gA = genderOf(sideA[0], playerMap)
-    const gB = genderOf(sideB[0], playerMap)
-    if (gA !== null && gB !== null && gA !== gB) penalty += GENDER_SINGLES_PENALTY
   }
 
   return penalty
@@ -168,57 +138,99 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
 
   for (const ci of availableCourts) {
     const courtFormat = courtFormats[ci] ?? format
-    const courtGenderFormat: GenderFormat = (courtGenderFormats ?? [])[ci] ?? (genderFormat ?? 'any')
+    const courtGenderFmt: GenderFormat = (courtGenderFormats ?? [])[ci] ?? (genderFormat ?? 'any')
     const ppm = courtFormat === 'doubles' ? 4 : 2
 
     if (remaining.length < ppm) continue
 
-    // ppm + SELECTION_WINDOW 人を候補プールとして、最もバランスの良い組み合わせを探す
-    const pool = remaining.slice(0, Math.min(remaining.length, ppm + SELECTION_WINDOW))
+    // ── 性別ハード制約によるプール絞り込み ──
+    let pool: string[]
+    let useMixedMode = false
+    let malePool: string[] = []
+    let femalePool: string[] = []
 
+    if (courtGenderFmt === 'mens') {
+      const males = remaining.filter((id) => playerMap.get(id)?.gender === 'male')
+      pool = males.length >= ppm
+        ? males.slice(0, ppm + SELECTION_WINDOW)
+        : remaining.slice(0, ppm + SELECTION_WINDOW) // 人数不足時フォールバック
+    } else if (courtGenderFmt === 'womens') {
+      const females = remaining.filter((id) => playerMap.get(id)?.gender === 'female')
+      pool = females.length >= ppm
+        ? females.slice(0, ppm + SELECTION_WINDOW)
+        : remaining.slice(0, ppm + SELECTION_WINDOW)
+    } else if (courtGenderFmt === 'mixed' && courtFormat === 'doubles') {
+      const males = remaining.filter((id) => playerMap.get(id)?.gender === 'male')
+      const females = remaining.filter((id) => playerMap.get(id)?.gender === 'female')
+      if (males.length >= 2 && females.length >= 2) {
+        useMixedMode = true
+        malePool = males.slice(0, 2 + SELECTION_WINDOW)
+        femalePool = females.slice(0, 2 + SELECTION_WINDOW)
+        pool = [] // mixed モードでは使用しない
+      } else {
+        pool = remaining.slice(0, ppm + SELECTION_WINDOW)
+      }
+    } else {
+      pool = remaining.slice(0, ppm + SELECTION_WINDOW)
+    }
+
+    // ── 初期値設定 ──
     let bestTotalScore = Infinity
-    let bestCandidates = pool.slice(0, ppm)
-    let bestSideA = bestCandidates.slice(0, ppm / 2)
-    let bestSideB = bestCandidates.slice(ppm / 2)
+    let bestCandidates: string[]
+    let bestSideA: string[]
+    let bestSideB: string[]
 
-    // プール内で両メンバーが揃っている固定ペアを探す（ダブルスのみ）
-    const activePair = courtFormat === 'doubles'
+    if (useMixedMode) {
+      bestCandidates = [malePool[0], malePool[1], femalePool[0], femalePool[1]]
+      bestSideA = [malePool[0], femalePool[0]]
+      bestSideB = [malePool[1], femalePool[1]]
+    } else {
+      bestCandidates = pool.slice(0, ppm)
+      bestSideA = bestCandidates.slice(0, ppm / 2)
+      bestSideB = bestCandidates.slice(ppm / 2)
+    }
+
+    // プール内で両メンバーが揃っている固定ペアを探す（ダブルス・非ミックスのみ）
+    const activePair = !useMixedMode && courtFormat === 'doubles'
       ? pairs.find((pair) => pair.playerIds.every((id) => pool.includes(id)))
       : undefined
 
     for (let attempt = 0; attempt < GENERATION_ATTEMPTS; attempt++) {
-      // 固定ペアがプール内に存在する場合、両メンバーを必ず候補に含める
       let candidates: string[]
-      if (activePair) {
+      let sideA: string[]
+      let sideB: string[]
+
+      if (useMixedMode) {
+        // ミックスダブルス：1男 + 1女 を各サイドに確保
+        const pickedMales = attempt === 0 ? malePool.slice(0, 2) : shuffle(malePool).slice(0, 2)
+        const pickedFemales = attempt === 0 ? femalePool.slice(0, 2) : shuffle(femalePool).slice(0, 2)
+        candidates = [...pickedMales, ...pickedFemales]
+        sideA = [pickedMales[0], pickedFemales[0]]
+        sideB = [pickedMales[1], pickedFemales[1]]
+      } else if (activePair) {
+        // 固定ペアを両メンバー強制包含
         const pairIds = activePair.playerIds
         const rest = pool.filter((id) => !pairIds.includes(id))
         const fillers = attempt === 0 ? rest.slice(0, ppm - 2) : shuffle(rest).slice(0, ppm - 2)
         candidates = [...pairIds, ...fillers]
-      } else {
-        // 最初の試行は必ず strict top-ppm（公平性の基準として）
-        candidates = attempt === 0 ? pool.slice(0, ppm) : shuffle(pool).slice(0, ppm)
-      }
-
-      // スキップペナルティ：試合数の少ない選手を飛ばすほどコスト増
-      const avgIdx =
-        candidates.reduce((sum, id) => sum + pool.indexOf(id), 0) / ppm
-      const skipPenalty = avgIdx * GAME_COUNT_SKIP_PENALTY
-
-      let sideA: string[]
-      let sideB: string[]
-
-      if (courtFormat === 'doubles') {
         ;[sideA, sideB] = constrainedSplitDoubles(candidates, pairs)
       } else {
-        sideA = [candidates[0]]
-        sideB = [candidates[1]]
+        candidates = attempt === 0 ? pool.slice(0, ppm) : shuffle(pool).slice(0, ppm)
+        if (courtFormat === 'doubles') {
+          ;[sideA, sideB] = constrainedSplitDoubles(candidates, pairs)
+        } else {
+          sideA = [candidates[0]]
+          sideB = [candidates[1]]
+        }
       }
 
-      const rankScore = scoreAssignment(
-        sideA, sideB, recentHistory, playerMap,
-        courtGenderFormat, courtFormat === 'doubles', rankBalanceEnabled
-      )
-      const totalScore = rankScore + skipPenalty
+      // スキップペナルティ：remaining 内の順位で計算
+      const avgIdx =
+        candidates.reduce((sum, id) => sum + remaining.indexOf(id), 0) / ppm
+      const skipPenalty = avgIdx * GAME_COUNT_SKIP_PENALTY
+
+      const score = scoreAssignment(sideA, sideB, recentHistory, playerMap, rankBalanceEnabled)
+      const totalScore = score + skipPenalty
 
       if (totalScore < bestTotalScore) {
         bestTotalScore = totalScore
@@ -244,7 +256,6 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
       finished: false,
     })
 
-    // 選ばれた選手をキューから除去（strict top-ppm ではない場合もある）
     const usedSet = new Set(bestCandidates)
     remaining = remaining.filter((id) => !usedSet.has(id))
   }

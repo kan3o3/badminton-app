@@ -4,11 +4,17 @@ import useAppStore from '@/store/useAppStore'
 import Button from '@/components/common/Button'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 
-const GENDER_FORMAT_OPTIONS: { value: GenderFormat; label: string }[] = [
+const GENDER_FORMAT_OPTIONS_DOUBLES: { value: GenderFormat; label: string }[] = [
   { value: 'any', label: '指定なし' },
   { value: 'mens', label: '男子' },
   { value: 'womens', label: '女子' },
   { value: 'mixed', label: 'ミックス' },
+]
+
+const GENDER_FORMAT_OPTIONS_SINGLES: { value: GenderFormat; label: string }[] = [
+  { value: 'any', label: '指定なし' },
+  { value: 'mens', label: '男子' },
+  { value: 'womens', label: '女子' },
 ]
 
 function Stepper({
@@ -170,7 +176,7 @@ export default function SettingsPage() {
           <p className="font-medium text-gray-700 mb-0.5">デフォルト性別形式</p>
           <p className="text-xs text-gray-400 mb-3">コート個別に設定していない場合に適用</p>
           <div className="flex gap-2">
-            {GENDER_FORMAT_OPTIONS.map(({ value, label }) => (
+            {(courtConfig.format === 'singles' ? GENDER_FORMAT_OPTIONS_SINGLES : GENDER_FORMAT_OPTIONS_DOUBLES).map(({ value, label }) => (
               <button
                 key={value}
                 onClick={() => setCourtConfig({ genderFormat: value })}
@@ -192,11 +198,13 @@ export default function SettingsPage() {
             <div className="space-y-2.5">
               {Array.from({ length: courtConfig.totalCourts }, (_, i) => {
                 const gfmt = (courtConfig.courtGenderFormats ?? [])[i] ?? (courtConfig.genderFormat ?? 'any')
+                const courtFmt = courtConfig.courtFormats[i] ?? courtConfig.format
+                const genderOptions = courtFmt === 'singles' ? GENDER_FORMAT_OPTIONS_SINGLES : GENDER_FORMAT_OPTIONS_DOUBLES
                 return (
                   <div key={i} className="flex items-center justify-between">
                     <span className="text-sm text-gray-600 font-medium">コート {i + 1}</span>
                     <div className="flex gap-1">
-                      {GENDER_FORMAT_OPTIONS.map(({ value, label }) => (
+                      {genderOptions.map(({ value, label }) => (
                         <button
                           key={value}
                           onClick={() => setGenderFormat(i, value)}
