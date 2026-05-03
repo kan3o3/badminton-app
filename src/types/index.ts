@@ -59,32 +59,6 @@ export interface GameResult {
   roundNumber: number
 }
 
-export type TeamColor = 'red' | 'blue' | 'green' | 'yellow' | 'purple'
-
-export interface Team {
-  id: string
-  name: string
-  color: TeamColor
-  playerIds: string[]
-}
-
-export interface TeamCourtAssignment {
-  courtIndex: number
-  teamAPlayerIds: string[]
-  teamBPlayerIds: string[]
-  scoreA: number | null
-  scoreB: number | null
-  status: 'pending' | 'done'
-}
-
-export interface TeamMatch {
-  id: string
-  teamAId: string
-  teamBId: string
-  courts: TeamCourtAssignment[]
-  status: 'active' | 'completed'
-  createdAt: number
-}
 
 export interface PlayerStats {
   playerId: string
