@@ -189,14 +189,12 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
       const females = remaining.filter((id) => playerMap.get(id)?.gender === 'female')
       if (males.length >= 2 && females.length >= 2) {
         useMixedMode = true
-        mixedActivePair = activePairInRemaining
-          ? (() => {
-              const [p1, p2] = activePairInRemaining.playerIds
-              return (males.includes(p1) && females.includes(p2)) ||
-                     (females.includes(p1) && males.includes(p2))
-                ? activePairInRemaining : undefined
-            })()
-          : undefined
+        // pairs 全体から男女ペアを直接探す（activePairInRemaining は同性ペアかもしれないため使わない）
+        mixedActivePair = pairs.find((p) => {
+          const [p1, p2] = p.playerIds
+          return (males.includes(p1) && females.includes(p2)) ||
+                 (females.includes(p1) && males.includes(p2))
+        })
         if (mixedActivePair) {
           const [p1, p2] = mixedActivePair.playerIds
           const pairedMale = males.includes(p1) ? p1 : p2
