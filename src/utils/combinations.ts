@@ -143,40 +143,44 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
 
     if (remaining.length < ppm) continue
 
+    // ── 固定ペアを remaining から検索（モード共通） ──
+    // 両メンバーが remaining にいる場合のみ有効
+    const activePairInRemaining = pairs.find((p) =>
+      p.playerIds.every((id) => remaining.includes(id))
+    )
+
     // ── 性別ハード制約によるプール絞り込み ──
     let pool: string[]
     let useMixedMode = false
     let malePool: string[] = []
     let femalePool: string[] = []
-    // ミックスモード用固定ペア（男女1組）
     let mixedActivePair: FixedPair | undefined
+
+    // 固定ペアメンバーをリスト先頭に移動してスライスするヘルパー
+    function buildPoolWithPair(base: string[], pairIds: readonly string[], size: number): string[] {
+      const rest = base.filter((id) => !pairIds.includes(id))
+      return [...pairIds, ...rest].slice(0, size)
+    }
 
     if (courtGenderFmt === 'mens') {
       const males = remaining.filter((id) => playerMap.get(id)?.gender === 'male')
       if (males.length >= ppm) {
-        // 固定ペアのメンバーを先頭に確保したうえでプール構築
-        const activePairInMales = pairs.find((p) => p.playerIds.every((id) => males.includes(id)))
-        if (activePairInMales) {
-          const pairIds = activePairInMales.playerIds
-          const rest = males.filter((id) => !pairIds.includes(id))
-          pool = [...pairIds, ...rest].slice(0, ppm + SELECTION_WINDOW)
-        } else {
-          pool = males.slice(0, ppm + SELECTION_WINDOW)
-        }
+        const pairInMales = activePairInRemaining?.playerIds.every((id) => males.includes(id))
+          ? activePairInRemaining : undefined
+        pool = pairInMales
+          ? buildPoolWithPair(males, pairInMales.playerIds, ppm + SELECTION_WINDOW)
+          : males.slice(0, ppm + SELECTION_WINDOW)
       } else {
-        pool = remaining.slice(0, ppm + SELECTION_WINDOW) // 人数不足時フォールバック
+        pool = remaining.slice(0, ppm + SELECTION_WINDOW)
       }
     } else if (courtGenderFmt === 'womens') {
       const females = remaining.filter((id) => playerMap.get(id)?.gender === 'female')
       if (females.length >= ppm) {
-        const activePairInFemales = pairs.find((p) => p.playerIds.every((id) => females.includes(id)))
-        if (activePairInFemales) {
-          const pairIds = activePairInFemales.playerIds
-          const rest = females.filter((id) => !pairIds.includes(id))
-          pool = [...pairIds, ...rest].slice(0, ppm + SELECTION_WINDOW)
-        } else {
-          pool = females.slice(0, ppm + SELECTION_WINDOW)
-        }
+        const pairInFemales = activePairInRemaining?.playerIds.every((id) => females.includes(id))
+          ? activePairInRemaining : undefined
+        pool = pairInFemales
+          ? buildPoolWithPair(females, pairInFemales.playerIds, ppm + SELECTION_WINDOW)
+          : females.slice(0, ppm + SELECTION_WINDOW)
       } else {
         pool = remaining.slice(0, ppm + SELECTION_WINDOW)
       }
@@ -185,12 +189,14 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
       const females = remaining.filter((id) => playerMap.get(id)?.gender === 'female')
       if (males.length >= 2 && females.length >= 2) {
         useMixedMode = true
-        // 男女ペアの固定ペアを検索し、メンバーをプール先頭に確保
-        mixedActivePair = pairs.find((p) => {
-          const [p1, p2] = p.playerIds
-          return (males.includes(p1) && females.includes(p2)) ||
-                 (females.includes(p1) && males.includes(p2))
-        })
+        mixedActivePair = activePairInRemaining
+          ? (() => {
+              const [p1, p2] = activePairInRemaining.playerIds
+              return (males.includes(p1) && females.includes(p2)) ||
+                     (females.includes(p1) && males.includes(p2))
+                ? activePairInRemaining : undefined
+            })()
+          : undefined
         if (mixedActivePair) {
           const [p1, p2] = mixedActivePair.playerIds
           const pairedMale = males.includes(p1) ? p1 : p2
@@ -201,12 +207,15 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
           malePool = males.slice(0, 2 + SELECTION_WINDOW)
           femalePool = females.slice(0, 2 + SELECTION_WINDOW)
         }
-        pool = [] // mixed モードでは使用しない
+        pool = []
       } else {
         pool = remaining.slice(0, ppm + SELECTION_WINDOW)
       }
     } else {
-      pool = remaining.slice(0, ppm + SELECTION_WINDOW)
+      // any: 固定ペアがいれば先頭に確保
+      pool = activePairInRemaining
+        ? buildPoolWithPair(remaining, activePairInRemaining.playerIds, ppm + SELECTION_WINDOW)
+        : remaining.slice(0, ppm + SELECTION_WINDOW)
     }
 
     // ── 初期値設定 ──
