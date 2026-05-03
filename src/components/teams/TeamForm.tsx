@@ -6,6 +6,7 @@ interface TeamFormProps {
   initialColor?: TeamColor
   initialPlayerIds?: string[]
   players: Player[]
+  takenPlayerIds?: Set<string>
   onSubmit: (name: string, color: TeamColor, playerIds: string[]) => void
 }
 
@@ -22,7 +23,7 @@ const COLORS: { value: TeamColor; label: string; bg: string; ring: string }[] = 
 ]
 
 const TeamForm = forwardRef<TeamFormHandle, TeamFormProps>(
-  function TeamForm({ initialName = '', initialColor = 'red', initialPlayerIds = [], players, onSubmit }, ref) {
+  function TeamForm({ initialName = '', initialColor = 'red', initialPlayerIds = [], players, takenPlayerIds, onSubmit }, ref) {
     const [name, setName] = useState(initialName)
     const [color, setColor] = useState<TeamColor>(initialColor)
     const [selectedIds, setSelectedIds] = useState<string[]>(initialPlayerIds)
@@ -87,29 +88,40 @@ const TeamForm = forwardRef<TeamFormHandle, TeamFormProps>(
             <p className="text-sm text-gray-400">選手が登録されていません</p>
           ) : (
             <div className="space-y-1.5 max-h-48 overflow-y-auto">
-              {players.map((p) => (
-                <label
-                  key={p.id}
-                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
-                    selectedIds.includes(p.id) ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-transparent'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(p.id)}
-                    onChange={() => togglePlayer(p.id)}
-                    className="accent-green-600"
-                  />
-                  <span className="text-sm text-gray-800 font-medium">{p.name}</span>
-                  {p.gender === 'male' && <span className="text-xs bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded-lg font-bold leading-none">男</span>}
-                  {p.gender === 'female' && <span className="text-xs bg-rose-100 text-rose-500 px-1.5 py-0.5 rounded-lg font-bold leading-none">女</span>}
-                  {p.rank && (
-                    <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-lg font-bold ml-auto">
-                      {p.rank}
-                    </span>
-                  )}
-                </label>
-              ))}
+              {players.map((p) => {
+                const taken = takenPlayerIds?.has(p.id) ?? false
+                return (
+                  <label
+                    key={p.id}
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                      taken
+                        ? 'bg-gray-50 border border-transparent opacity-50 cursor-not-allowed'
+                        : selectedIds.includes(p.id)
+                          ? 'bg-green-50 border border-green-200 cursor-pointer'
+                          : 'bg-gray-50 border border-transparent cursor-pointer'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(p.id)}
+                      onChange={() => { if (!taken) togglePlayer(p.id) }}
+                      disabled={taken}
+                      className="accent-green-600"
+                    />
+                    <span className="text-sm text-gray-800 font-medium">{p.name}</span>
+                    {p.gender === 'male' && <span className="text-xs bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded-lg font-bold leading-none">男</span>}
+                    {p.gender === 'female' && <span className="text-xs bg-rose-100 text-rose-500 px-1.5 py-0.5 rounded-lg font-bold leading-none">女</span>}
+                    {taken
+                      ? <span className="text-xs bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded-lg font-bold ml-auto">他チーム</span>
+                      : p.rank && (
+                        <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-lg font-bold ml-auto">
+                          {p.rank}
+                        </span>
+                      )
+                    }
+                  </label>
+                )
+              })}
             </div>
           )}
         </div>

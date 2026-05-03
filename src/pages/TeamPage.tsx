@@ -137,7 +137,12 @@ export default function TeamPage() {
         title="チームを追加"
         footer={<FormFooter onSave={() => addFormRef.current?.save()} onCancel={() => setAddOpen(false)} />}
       >
-        <TeamForm ref={addFormRef} players={players} onSubmit={handleAdd} />
+        <TeamForm
+          ref={addFormRef}
+          players={players}
+          takenPlayerIds={new Set(teams.flatMap((t) => t.playerIds))}
+          onSubmit={handleAdd}
+        />
       </Modal>
 
       <Modal
@@ -153,6 +158,7 @@ export default function TeamPage() {
             initialColor={editTarget.color}
             initialPlayerIds={editTarget.playerIds}
             players={players}
+            takenPlayerIds={new Set(teams.filter((t) => t.id !== editTarget.id).flatMap((t) => t.playerIds))}
             onSubmit={handleEdit}
           />
         )}
