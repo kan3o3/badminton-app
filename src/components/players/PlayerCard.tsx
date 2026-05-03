@@ -68,10 +68,10 @@ export default function PlayerCard({ player, gameCount, onEdit, onDelete, onStat
           <div className="flex items-center gap-2">
             <span className="font-semibold text-gray-800 truncate">{player.name}</span>
             {player.gender === 'male' && (
-              <span className="text-xs text-blue-500 font-bold leading-none">♂</span>
+              <span className="text-xs bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded-lg font-bold leading-none">男</span>
             )}
             {player.gender === 'female' && (
-              <span className="text-xs text-pink-500 font-bold leading-none">♀</span>
+              <span className="text-xs bg-rose-100 text-rose-500 px-1.5 py-0.5 rounded-lg font-bold leading-none">女</span>
             )}
             {player.rank && (
               <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-lg font-bold leading-none">

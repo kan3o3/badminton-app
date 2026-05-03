@@ -101,8 +101,8 @@ const TeamForm = forwardRef<TeamFormHandle, TeamFormProps>(
                     className="accent-green-600"
                   />
                   <span className="text-sm text-gray-800 font-medium">{p.name}</span>
-                  {p.gender === 'male' && <span className="text-xs text-blue-500">♂</span>}
-                  {p.gender === 'female' && <span className="text-xs text-pink-500">♀</span>}
+                  {p.gender === 'male' && <span className="text-xs bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded-lg font-bold leading-none">男</span>}
+                  {p.gender === 'female' && <span className="text-xs bg-rose-100 text-rose-500 px-1.5 py-0.5 rounded-lg font-bold leading-none">女</span>}
                   {p.rank && (
                     <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-lg font-bold ml-auto">
                       {p.rank}

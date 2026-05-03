@@ -20,10 +20,10 @@ const ranks: { value: SkillRank; label: string }[] = [
   { value: 'D', label: 'D' },
 ]
 
-const genders: { value: Gender; label: string }[] = [
+const genders: { value: Gender; label: string; dot?: string }[] = [
   { value: null, label: '未設定' },
-  { value: 'male', label: '♂ 男性' },
-  { value: 'female', label: '♀ 女性' },
+  { value: 'male', label: '男性', dot: 'bg-sky-400' },
+  { value: 'female', label: '女性', dot: 'bg-rose-400' },
 ]
 
 const PlayerForm = forwardRef<PlayerFormHandle, PlayerFormProps>(
@@ -70,17 +70,18 @@ const PlayerForm = forwardRef<PlayerFormHandle, PlayerFormProps>(
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">性別（任意）</label>
           <div className="flex gap-2">
-            {genders.map(({ value, label }) => (
+            {genders.map(({ value, label, dot }) => (
               <button
                 key={String(value)}
                 type="button"
                 onClick={() => setGender(value)}
-                className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium border transition-colors ${
                   gender === value
                     ? 'bg-green-600 text-white border-green-600'
                     : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
                 }`}
               >
+                {dot && <span className={`w-2.5 h-2.5 rounded-full ${gender === value ? 'bg-white opacity-80' : dot}`} />}
                 {label}
               </button>
             ))}
