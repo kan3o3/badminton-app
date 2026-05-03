@@ -42,6 +42,8 @@ function PlayerChip({
           : 'bg-gray-100 cursor-default'
       }`}
     >
+      {player.gender === 'male' && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dimmed ? 'bg-gray-200' : 'bg-sky-400'}`} />}
+      {player.gender === 'female' && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dimmed ? 'bg-gray-200' : 'bg-rose-400'}`} />}
       <span className={`font-semibold ${dimmed ? 'text-gray-300' : 'text-gray-800'}`}>{player.name}</span>
       {player.rank && (
         <span className={`text-[10px] font-bold px-1 py-0.5 rounded leading-none ${dimmed ? 'bg-gray-100 text-gray-300' : 'bg-blue-100 text-blue-600'}`}>

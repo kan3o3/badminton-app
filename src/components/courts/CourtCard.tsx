@@ -62,6 +62,8 @@ function PlayerName({ playerId, players, swapMode, selected, isTarget, onClick }
           : 'cursor-default'
       }`}
     >
+      {player.gender === 'male' && <span className="w-2 h-2 rounded-full bg-sky-400 flex-shrink-0" />}
+      {player.gender === 'female' && <span className="w-2 h-2 rounded-full bg-rose-400 flex-shrink-0" />}
       <span className="text-gray-800">{player.name}</span>
       {player.rank && (
         <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1 py-0.5 rounded leading-none">{player.rank}</span>
