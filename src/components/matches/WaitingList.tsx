@@ -1,4 +1,5 @@
 import type { Player } from '@/types'
+import { usePlayerNumbers } from '@/hooks/usePlayerNumbers'
 
 interface WaitingListProps {
   playerIds: string[]
@@ -12,6 +13,7 @@ interface WaitingListProps {
 function PlayerChip({
   player,
   count,
+  playerNumber,
   swapMode,
   isSelected,
   isTarget,
@@ -20,6 +22,7 @@ function PlayerChip({
 }: {
   player: Player
   count: number
+  playerNumber?: number
   swapMode: boolean
   isSelected: boolean
   isTarget: boolean
@@ -44,6 +47,9 @@ function PlayerChip({
     >
       {player.gender === 'male' && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dimmed ? 'bg-gray-200' : 'bg-sky-400'}`} />}
       {player.gender === 'female' && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dimmed ? 'bg-gray-200' : 'bg-rose-400'}`} />}
+      {playerNumber !== undefined && (
+        <span className={`text-[10px] font-mono ${dimmed ? 'text-gray-300' : 'text-gray-400'}`}>#{playerNumber}</span>
+      )}
       <span className={`font-semibold ${dimmed ? 'text-gray-300' : 'text-gray-800'}`}>{player.name}</span>
       {player.rank && (
         <span className={`text-[10px] font-bold px-1 py-0.5 rounded leading-none ${dimmed ? 'bg-gray-100 text-gray-300' : 'bg-blue-100 text-blue-600'}`}>
@@ -65,6 +71,7 @@ export default function WaitingList({
   selectedId = null,
   onSelectPlayer,
 }: WaitingListProps) {
+  const playerNumbers = usePlayerNumbers()
   const restingPlayers = players.filter((p) => p.status === 'resting')
 
   const hasWaiting = playerIds.length > 0
@@ -97,6 +104,7 @@ export default function WaitingList({
                   key={id}
                   player={player}
                   count={gameCounts.get(id) ?? 0}
+                  playerNumber={playerNumbers.get(id)}
                   swapMode={swapMode}
                   isSelected={selectedId === id}
                   isTarget={swapMode && selectedId !== null && selectedId !== id}
@@ -122,6 +130,7 @@ export default function WaitingList({
                 key={player.id}
                 player={player}
                 count={gameCounts.get(player.id) ?? 0}
+                playerNumber={playerNumbers.get(player.id)}
                 swapMode={false}
                 isSelected={false}
                 isTarget={false}

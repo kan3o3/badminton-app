@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Player, PlayerStatus } from '@/types'
 import PlayerCard from './PlayerCard'
+import { usePlayerNumbers } from '@/hooks/usePlayerNumbers'
 
 type SortBy = 'createdAt' | 'name' | 'rank' | 'games'
 
@@ -29,6 +30,7 @@ const sortOptions: { value: SortBy; label: string }[] = [
 ]
 
 export default function PlayerList({ players, gameCounts, onEdit, onDelete, onStatusChange }: PlayerListProps) {
+  const playerNumbers = usePlayerNumbers()
   const [filter, setFilter] = useState<'all' | PlayerStatus>('all')
   const [sortBy, setSortBy] = useState<SortBy>('createdAt')
   const [searchQuery, setSearchQuery] = useState('')
@@ -107,6 +109,7 @@ export default function PlayerList({ players, gameCounts, onEdit, onDelete, onSt
               key={player.id}
               player={player}
               gameCount={gameCounts.get(player.id) ?? 0}
+              playerNumber={playerNumbers.get(player.id)}
               onEdit={() => onEdit(player)}
               onDelete={() => onDelete(player)}
               onStatusChange={(status) => onStatusChange(player.id, status)}

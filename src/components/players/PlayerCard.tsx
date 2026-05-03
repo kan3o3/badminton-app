@@ -4,6 +4,7 @@ import type { Player, PlayerStatus } from '@/types'
 interface PlayerCardProps {
   player: Player
   gameCount: number
+  playerNumber?: number
   onEdit: () => void
   onDelete: () => void
   onStatusChange: (status: PlayerStatus) => void
@@ -36,7 +37,7 @@ const STATUS_DOT: Record<PlayerStatus, string> = {
   absent: 'bg-gray-300',
 }
 
-export default function PlayerCard({ player, gameCount, onEdit, onDelete, onStatusChange }: PlayerCardProps) {
+export default function PlayerCard({ player, gameCount, playerNumber, onEdit, onDelete, onStatusChange }: PlayerCardProps) {
   const [pickerOpen, setPickerOpen] = useState(false)
 
   const handleStatusSelect = (status: PlayerStatus) => {
@@ -68,10 +69,23 @@ export default function PlayerCard({ player, gameCount, onEdit, onDelete, onStat
         {/* 名前・ランク・性別 */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
+            {playerNumber !== undefined && (
+              <span className="text-xs text-gray-400 font-mono flex-shrink-0">#{playerNumber}</span>
+            )}
             <span className="font-semibold text-gray-800 truncate">{player.name}</span>
             {player.rank && (
               <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-lg font-bold leading-none">
                 {player.rank}
+              </span>
+            )}
+            {player.gender === 'male' && (
+              <span className="text-xs bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded-lg font-bold leading-none flex-shrink-0">
+                男性
+              </span>
+            )}
+            {player.gender === 'female' && (
+              <span className="text-xs bg-rose-100 text-rose-500 px-1.5 py-0.5 rounded-lg font-bold leading-none flex-shrink-0">
+                女性
               </span>
             )}
           </div>

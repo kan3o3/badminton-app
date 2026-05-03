@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import type { ActiveMatch, Player } from '@/types'
 import TimerDisplay from './TimerDisplay'
 import useAppStore from '@/store/useAppStore'
+import { usePlayerNumbers } from '@/hooks/usePlayerNumbers'
 
 interface CourtCardProps {
   match: ActiveMatch
@@ -14,6 +15,7 @@ interface CourtCardProps {
 interface PlayerNameProps {
   playerId: string
   players: Player[]
+  playerNumbers: Map<string, number>
   swapMode: boolean
   selected: boolean
   isTarget: boolean
@@ -44,9 +46,11 @@ function playTimerAlert() {
   }
 }
 
-function PlayerName({ playerId, players, swapMode, selected, isTarget, onClick }: PlayerNameProps) {
+function PlayerName({ playerId, players, playerNumbers, swapMode, selected, isTarget, onClick }: PlayerNameProps) {
   const player = players.find((p) => p.id === playerId)
   if (!player) return <span className="text-gray-300 text-xs px-2 py-1">-</span>
+
+  const num = playerNumbers.get(playerId)
 
   return (
     <button
@@ -64,6 +68,7 @@ function PlayerName({ playerId, players, swapMode, selected, isTarget, onClick }
     >
       {player.gender === 'male' && <span className="w-2 h-2 rounded-full bg-sky-400 flex-shrink-0" />}
       {player.gender === 'female' && <span className="w-2 h-2 rounded-full bg-rose-400 flex-shrink-0" />}
+      {num !== undefined && <span className="text-[10px] text-gray-400 font-mono">#{num}</span>}
       <span className="text-gray-800">{player.name}</span>
       {player.rank && (
         <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1 py-0.5 rounded leading-none">{player.rank}</span>
@@ -74,6 +79,7 @@ function PlayerName({ playerId, players, swapMode, selected, isTarget, onClick }
 
 export default function CourtCard({ match, players, swapMode: rawSwapMode, selectedId, onSelectPlayer }: CourtCardProps) {
   const swapMode = rawSwapMode && !match.finished
+  const playerNumbers = usePlayerNumbers()
   const [showScore, setShowScore] = useState(false)
   const [scoreA, setScoreA] = useState(match.scoreA !== null ? String(match.scoreA) : '')
   const [scoreB, setScoreB] = useState(match.scoreB !== null ? String(match.scoreB) : '')
@@ -173,6 +179,7 @@ export default function CourtCard({ match, players, swapMode: rawSwapMode, selec
               key={id}
               playerId={id}
               players={players}
+              playerNumbers={playerNumbers}
               swapMode={swapMode}
               selected={selectedId === id}
               isTarget={swapMode && selectedId !== null && selectedId !== id}
@@ -189,6 +196,7 @@ export default function CourtCard({ match, players, swapMode: rawSwapMode, selec
               key={id}
               playerId={id}
               players={players}
+              playerNumbers={playerNumbers}
               swapMode={swapMode}
               selected={selectedId === id}
               isTarget={swapMode && selectedId !== null && selectedId !== id}
