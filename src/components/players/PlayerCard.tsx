@@ -46,9 +46,7 @@ export default function PlayerCard({ player, gameCount, playerNumber, onEdit, on
   }
 
   return (
-    <div className={`bg-white rounded-2xl shadow-sm overflow-hidden transition-opacity border-l-4 ${
-      player.gender === 'male' ? 'border-l-sky-400' : player.gender === 'female' ? 'border-l-rose-400' : 'border-l-transparent'
-    } ${player.status === 'absent' ? 'opacity-50' : ''}`}>
+    <div className={`bg-white rounded-2xl shadow-sm overflow-hidden transition-opacity ${player.status === 'absent' ? 'opacity-50' : ''}`}>
       <div className="px-4 py-3 flex items-center gap-3">
         {/* ステータスドット + バッジ */}
         <button
