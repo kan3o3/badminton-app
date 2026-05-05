@@ -3,6 +3,7 @@ import {
   TEAMMATE_REPEAT_PENALTY,
   OPPONENT_REPEAT_PENALTY,
   RANK_IMBALANCE_FACTOR,
+  RANK_VARIANCE_FACTOR,
   RECENCY_WINDOW,
   GENERATION_ATTEMPTS,
   SELECTION_WINDOW,
@@ -25,7 +26,7 @@ interface GenerateParams {
 const RANK_VALUES: Record<string, number> = { A: 4, B: 3, C: 2, D: 1 }
 const RANK_DEFAULT = 2.5
 
-function today() {
+function today(): string {
   return new Date().toLocaleDateString('en-CA')
 }
 
@@ -40,49 +41,13 @@ function countGamesToday(history: GameResult[], sessionDate: string): Map<string
   return counts
 }
 
-function avgRank(ids: string[], playerMap: Map<string, Player>): number {
-  const values = ids.map((id) => {
-    const rank = playerMap.get(id)?.rank
-    return rank ? RANK_VALUES[rank] : RANK_DEFAULT
-  })
-  return values.reduce((a, b) => a + b, 0) / values.length
+function rankVal(id: string, playerMap: Map<string, Player>): number {
+  const rank = playerMap.get(id)?.rank
+  return rank ? (RANK_VALUES[rank] ?? RANK_DEFAULT) : RANK_DEFAULT
 }
 
-function scoreAssignment(
-  sideA: string[],
-  sideB: string[],
-  recentHistory: GameResult[],
-  playerMap: Map<string, Player>,
-  rankEnabled: boolean
-): number {
-  let penalty = 0
-
-  // ── 直近対戦・ペア重複ペナルティ ──
-  for (const match of recentHistory) {
-    const mA = new Set(match.sideA)
-    const mB = new Set(match.sideB)
-
-    if (sideA.length > 1) {
-      if (sideA.every((id) => mA.has(id)) || sideA.every((id) => mB.has(id)))
-        penalty += TEAMMATE_REPEAT_PENALTY
-    }
-    if (sideB.length > 1) {
-      if (sideB.every((id) => mA.has(id)) || sideB.every((id) => mB.has(id)))
-        penalty += TEAMMATE_REPEAT_PENALTY
-    }
-
-    const facedAvsB = sideA.some((id) => mB.has(id)) && sideB.some((id) => mA.has(id))
-    const facedBvsA = sideB.some((id) => mB.has(id)) && sideA.some((id) => mA.has(id))
-    if (facedAvsB || facedBvsA) penalty += OPPONENT_REPEAT_PENALTY
-  }
-
-  // ── ランク差ペナルティ（二乗：差が大きいほど急激に増加）──
-  if (rankEnabled) {
-    const rankDiff = Math.abs(avgRank(sideA, playerMap) - avgRank(sideB, playerMap))
-    penalty += rankDiff * rankDiff * RANK_IMBALANCE_FACTOR
-  }
-
-  return penalty
+function avgRankVal(ids: string[], playerMap: Map<string, Player>): number {
+  return ids.reduce((s, id) => s + rankVal(id, playerMap), 0) / ids.length
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -94,23 +59,107 @@ function shuffle<T>(arr: T[]): T[] {
   return out
 }
 
-function randomSplitDoubles(group: string[]): [string[], string[]] {
-  const shuffled = shuffle(group)
-  return [shuffled.slice(0, 2), shuffled.slice(2, 4)]
-}
-
-function constrainedSplitDoubles(group: string[], pairs: FixedPair[]): [string[], string[]] {
-  for (const pair of pairs) {
-    const [p1, p2] = pair.playerIds
-    if (group.includes(p1) && group.includes(p2)) {
-      const others = group.filter((id) => id !== p1 && id !== p2)
-      const shuffledOthers = shuffle(others)
-      return Math.random() < 0.5
-        ? [[p1, p2], shuffledOthers.slice(0, 2)]
-        : [shuffledOthers.slice(0, 2), [p1, p2]]
+/**
+ * 有効ペアを収集する（両メンバーが availableSet に存在し、かつ同一プレイヤーの重複を除外）。
+ * 登録順優先（greedy）。
+ */
+function collectActivePairs(pairs: FixedPair[], availableSet: Set<string>): FixedPair[] {
+  const result: FixedPair[] = []
+  const used = new Set<string>()
+  for (const p of pairs) {
+    if (p.playerIds.every((id) => availableSet.has(id) && !used.has(id))) {
+      result.push(p)
+      p.playerIds.forEach((id) => used.add(id))
     }
   }
-  return randomSplitDoubles(group)
+  return result
+}
+
+/**
+ * プールを構築する。activePairs の全メンバーを先頭に確保し、size にスライス。
+ */
+function buildPool(base: string[], activePairs: FixedPair[], size: number): string[] {
+  const pairSet = new Set(activePairs.flatMap((p) => p.playerIds))
+  const front = activePairs.flatMap((p) => [...p.playerIds]).filter((id) => base.includes(id))
+  const rest = base.filter((id) => !pairSet.has(id))
+  return [...front, ...rest].slice(0, size)
+}
+
+/**
+ * ダブルス4人を2サイドに分割する。固定ペアを同サイドに配置することを保証。
+ * - 2ペア → pair1 vs pair2
+ * - 1ペア → ペアを同サイドに固定、残り2人はランダム配置
+ * - 0ペア → 完全ランダム
+ */
+function splitDoublesIntoSides(candidates: string[], activePairs: FixedPair[]): [string[], string[]] {
+  if (activePairs.length >= 2) {
+    return Math.random() < 0.5
+      ? [[...activePairs[0].playerIds], [...activePairs[1].playerIds]]
+      : [[...activePairs[1].playerIds], [...activePairs[0].playerIds]]
+  }
+  if (activePairs.length === 1) {
+    const [p1, p2] = activePairs[0].playerIds
+    const others = shuffle(candidates.filter((id) => id !== p1 && id !== p2))
+    return Math.random() < 0.5
+      ? [[p1, p2], others.slice(0, 2)]
+      : [others.slice(0, 2), [p1, p2]]
+  }
+  const s = shuffle(candidates)
+  return [s.slice(0, 2), s.slice(2, 4)]
+}
+
+/**
+ * 試合割り当てのスコアを計算する（低いほど良い）。
+ *
+ * ペナルティ構成:
+ * - チームメイト/対戦相手の重複: 直近重み付き（新しい試合ほど大きいペナルティ）
+ * - チーム間ランク差: 二乗（大きな差を急激に抑制）
+ * - チーム内ランク差: 線形（A+D vs B+C のような極端なペアを抑制）
+ */
+function scoreAssignment(
+  sideA: string[],
+  sideB: string[],
+  recentHistory: GameResult[],
+  playerMap: Map<string, Player>,
+  rankEnabled: boolean
+): number {
+  let penalty = 0
+  const n = recentHistory.length
+
+  for (let i = 0; i < n; i++) {
+    // 古い試合ほど weight が小さい (1/n ～ 1.0)
+    const weight = (i + 1) / n
+    const { sideA: mA_arr, sideB: mB_arr } = recentHistory[i]
+    const mA = new Set(mA_arr)
+    const mB = new Set(mB_arr)
+
+    if (sideA.length > 1 && (sideA.every((id) => mA.has(id)) || sideA.every((id) => mB.has(id))))
+      penalty += TEAMMATE_REPEAT_PENALTY * weight
+    if (sideB.length > 1 && (sideB.every((id) => mA.has(id)) || sideB.every((id) => mB.has(id))))
+      penalty += TEAMMATE_REPEAT_PENALTY * weight
+
+    const facedAvsB = sideA.some((id) => mB.has(id)) && sideB.some((id) => mA.has(id))
+    const facedBvsA = sideB.some((id) => mB.has(id)) && sideA.some((id) => mA.has(id))
+    if (facedAvsB || facedBvsA) penalty += OPPONENT_REPEAT_PENALTY * weight
+  }
+
+  if (rankEnabled) {
+    // チーム間バランス（二乗: 差が大きいほど急激に増加）
+    const rankDiff = Math.abs(avgRankVal(sideA, playerMap) - avgRankVal(sideB, playerMap))
+    penalty += rankDiff * rankDiff * RANK_IMBALANCE_FACTOR
+
+    // チーム内ランク差（線形: A+D のような格差ペアを抑制）
+    if (sideA.length > 1) {
+      const vals = sideA.map((id) => rankVal(id, playerMap))
+      penalty += Math.abs(vals[0] - vals[1]) * RANK_VARIANCE_FACTOR
+    }
+    if (sideB.length > 1) {
+      const vals = sideB.map((id) => rankVal(id, playerMap))
+      penalty += Math.abs(vals[0] - vals[1]) * RANK_VARIANCE_FACTOR
+    }
+  }
+
+  return penalty
 }
 
 export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] {
@@ -121,12 +170,13 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
   const gameCounts = countGamesToday(gameHistory, sessionDate)
   const playerMap = new Map(players.map((p) => [p.id, p]))
 
+  // ゲーム数同数時のtie-breakをランダム化（毎ラウンド同じ人が先頭になるのを防ぐ）
+  const tieKey = new Map(queue.map((id) => [id, Math.random()]))
   const sorted = [...queue]
     .filter((id) => playerMap.has(id))
     .sort((a, b) => {
       const diff = (gameCounts.get(a) ?? 0) - (gameCounts.get(b) ?? 0)
-      if (diff !== 0) return diff
-      return (playerMap.get(a)!.createdAt) - (playerMap.get(b)!.createdAt)
+      return diff !== 0 ? diff : tieKey.get(a)! - tieKey.get(b)!
     })
 
   const availableCourts = Array.from({ length: totalCourts }, (_, i) => i)
@@ -143,124 +193,99 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
 
     if (remaining.length < ppm) continue
 
-    // ── 固定ペアを remaining から検索（モード共通） ──
-    // 両メンバーが remaining にいる場合のみ有効。複数ペアは conflict（同一プレイヤーを共有）を除外して収集
-    const activePairsInRemaining: FixedPair[] = []
-    const usedInActivePairs = new Set<string>()
-    for (const p of pairs) {
-      if (p.playerIds.every((id) => remaining.includes(id) && !usedInActivePairs.has(id))) {
-        activePairsInRemaining.push(p)
-        p.playerIds.forEach((id) => usedInActivePairs.add(id))
-      }
-    }
-    const activePairInRemaining = activePairsInRemaining[0] as FixedPair | undefined
+    const remainingSet = new Set(remaining)
 
-    // ── 性別ハード制約によるプール絞り込み ──
-    let pool: string[]
+    // ── 性別フィルタ + プール構築 ──
+    let pool: string[] = []
     let useMixedMode = false
     let malePool: string[] = []
     let femalePool: string[] = []
-    let mixedActivePair: FixedPair | undefined
-
-    // 固定ペアメンバーをリスト先頭に移動してスライスするヘルパー
-    function buildPoolWithPair(base: string[], pairIds: readonly string[], size: number): string[] {
-      const rest = base.filter((id) => !pairIds.includes(id))
-      return [...pairIds, ...rest].slice(0, size)
-    }
+    let mixedActivePairs: FixedPair[] = []
 
     if (courtGenderFmt === 'mens') {
       const males = remaining.filter((id) => playerMap.get(id)?.gender === 'male')
-      if (males.length >= ppm) {
-        const pairInMales = activePairInRemaining?.playerIds.every((id) => males.includes(id))
-          ? activePairInRemaining : undefined
-        pool = pairInMales
-          ? buildPoolWithPair(males, pairInMales.playerIds, ppm + SELECTION_WINDOW)
-          : males.slice(0, ppm + SELECTION_WINDOW)
-      } else {
-        pool = remaining.slice(0, ppm + SELECTION_WINDOW)
-      }
+      const base = males.length >= ppm ? males : remaining
+      pool = buildPool(base, collectActivePairs(pairs, new Set(base)), ppm + SELECTION_WINDOW)
+
     } else if (courtGenderFmt === 'womens') {
       const females = remaining.filter((id) => playerMap.get(id)?.gender === 'female')
-      if (females.length >= ppm) {
-        const pairInFemales = activePairInRemaining?.playerIds.every((id) => females.includes(id))
-          ? activePairInRemaining : undefined
-        pool = pairInFemales
-          ? buildPoolWithPair(females, pairInFemales.playerIds, ppm + SELECTION_WINDOW)
-          : females.slice(0, ppm + SELECTION_WINDOW)
-      } else {
-        pool = remaining.slice(0, ppm + SELECTION_WINDOW)
-      }
+      const base = females.length >= ppm ? females : remaining
+      pool = buildPool(base, collectActivePairs(pairs, new Set(base)), ppm + SELECTION_WINDOW)
+
     } else if (courtGenderFmt === 'mixed' && courtFormat === 'doubles') {
       const males = remaining.filter((id) => playerMap.get(id)?.gender === 'male')
       const females = remaining.filter((id) => playerMap.get(id)?.gender === 'female')
+
       if (males.length >= 2 && females.length >= 2) {
         useMixedMode = true
-        // pairs 全体から男女ペアを直接探す（activePairInRemaining は同性ペアかもしれないため使わない）
-        mixedActivePair = pairs.find((p) => {
-          const [p1, p2] = p.playerIds
-          return (males.includes(p1) && females.includes(p2)) ||
-                 (females.includes(p1) && males.includes(p2))
-        })
-        if (mixedActivePair) {
-          const [p1, p2] = mixedActivePair.playerIds
-          const pairedMale = males.includes(p1) ? p1 : p2
-          const pairedFemale = females.includes(p1) ? p1 : p2
-          malePool = [pairedMale, ...males.filter((id) => id !== pairedMale)].slice(0, 2 + SELECTION_WINDOW)
-          femalePool = [pairedFemale, ...females.filter((id) => id !== pairedFemale)].slice(0, 2 + SELECTION_WINDOW)
-        } else {
-          malePool = males.slice(0, 2 + SELECTION_WINDOW)
-          femalePool = females.slice(0, 2 + SELECTION_WINDOW)
-        }
-        pool = []
+
+        // 男女ペアのみを対象に有効ペア収集
+        const mixedPairCandidates = pairs.filter(({ playerIds: [p1, p2] }) =>
+          remainingSet.has(p1) && remainingSet.has(p2) &&
+          ((playerMap.get(p1)?.gender === 'male' && playerMap.get(p2)?.gender === 'female') ||
+           (playerMap.get(p1)?.gender === 'female' && playerMap.get(p2)?.gender === 'male'))
+        )
+        mixedActivePairs = collectActivePairs(mixedPairCandidates, remainingSet)
+
+        // malePool[i] と femalePool[i] が同じペアのメンバーになるよう並べる
+        const pairedMales = mixedActivePairs.map((p) => p.playerIds.find((id) => playerMap.get(id)?.gender === 'male')!)
+        const pairedFemales = mixedActivePairs.map((p) => p.playerIds.find((id) => playerMap.get(id)?.gender === 'female')!)
+        const mixedPairSet = new Set([...pairedMales, ...pairedFemales])
+
+        malePool = [...pairedMales, ...males.filter((id) => !mixedPairSet.has(id))].slice(0, 2 + SELECTION_WINDOW)
+        femalePool = [...pairedFemales, ...females.filter((id) => !mixedPairSet.has(id))].slice(0, 2 + SELECTION_WINDOW)
       } else {
-        pool = remaining.slice(0, ppm + SELECTION_WINDOW)
+        pool = buildPool(remaining, collectActivePairs(pairs, remainingSet), ppm + SELECTION_WINDOW)
       }
+
     } else {
-      // any: 固定ペアがいれば先頭に確保
-      pool = activePairInRemaining
-        ? buildPoolWithPair(remaining, activePairInRemaining.playerIds, ppm + SELECTION_WINDOW)
-        : remaining.slice(0, ppm + SELECTION_WINDOW)
+      // any
+      pool = buildPool(remaining, collectActivePairs(pairs, remainingSet), ppm + SELECTION_WINDOW)
     }
 
-    // ── 初期値設定 ──
-    let bestTotalScore = Infinity
-    let bestCandidates: string[]
-    let bestSideA: string[]
-    let bestSideB: string[]
+    // ── プール内の固定ペア（非ミックス用） ──
+    const poolActivePairs = !useMixedMode && courtFormat === 'doubles'
+      ? collectActivePairs(pairs, new Set(pool))
+      : []
 
-    if (useMixedMode) {
-      bestCandidates = [malePool[0], malePool[1], femalePool[0], femalePool[1]]
-      bestSideA = [malePool[0], femalePool[0]]
-      bestSideB = [malePool[1], femalePool[1]]
-    } else {
-      bestCandidates = pool.slice(0, ppm)
-      bestSideA = bestCandidates.slice(0, ppm / 2)
-      bestSideB = bestCandidates.slice(ppm / 2)
-    }
+    // ── スキップペナルティ基準（remainingの先頭プレイヤーのゲーム数） ──
+    const minCount = gameCounts.get(remaining[0]) ?? 0
 
-    // 非ミックスダブルス用固定ペア（pool内で conflict なしに収集）
-    let activePairsInPool: FixedPair[] = []
-    if (!useMixedMode && courtFormat === 'doubles') {
-      const usedInPool = new Set<string>()
-      for (const pair of pairs) {
-        if (pair.playerIds.every((id) => pool.includes(id) && !usedInPool.has(id))) {
-          activePairsInPool.push(pair)
-          pair.playerIds.forEach((id) => usedInPool.add(id))
-        }
-      }
-    }
-    const activePair = activePairsInPool[0] as FixedPair | undefined
-    // ダブルスで2ペア揃っている場合：両ペアを両サイドに固定（フィラー不要）
-    const twoPairsFixed = activePairsInPool.length >= 2
+    // ── 全メンバー確定の場合は side swap 2通りだけ試す ──
+    const allFixed = poolActivePairs.length >= 2 || (useMixedMode && mixedActivePairs.length >= 2)
+    const maxAttempts = allFixed ? 2 : GENERATION_ATTEMPTS
 
-    for (let attempt = 0; attempt < GENERATION_ATTEMPTS; attempt++) {
+    // ── 初期値 ──
+    let bestScore = Infinity
+    let bestCandidates: string[] = useMixedMode
+      ? [malePool[0], malePool[1], femalePool[0], femalePool[1]]
+      : pool.slice(0, ppm)
+    let bestSideA: string[] = useMixedMode
+      ? [malePool[0], femalePool[0]]
+      : bestCandidates.slice(0, ppm / 2)
+    let bestSideB: string[] = useMixedMode
+      ? [malePool[1], femalePool[1]]
+      : bestCandidates.slice(ppm / 2)
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       let candidates: string[]
       let sideA: string[]
       let sideB: string[]
 
       if (useMixedMode) {
-        if (mixedActivePair) {
-          // 固定ペア（男女）を同サイドに強制配置（プール先頭にペアメンバー確保済み）
+        if (mixedActivePairs.length >= 2) {
+          // 男女2固定ペア: side を swap するだけ
+          const p1m = mixedActivePairs[0].playerIds.find((id) => malePool.includes(id))!
+          const p1f = mixedActivePairs[0].playerIds.find((id) => femalePool.includes(id))!
+          const p2m = mixedActivePairs[1].playerIds.find((id) => malePool.includes(id))!
+          const p2f = mixedActivePairs[1].playerIds.find((id) => femalePool.includes(id))!
+          candidates = [p1m, p2m, p1f, p2f]
+          ;[sideA, sideB] = attempt === 0
+            ? [[p1m, p1f], [p2m, p2f]]
+            : [[p2m, p2f], [p1m, p1f]]
+
+        } else if (mixedActivePairs.length === 1) {
+          // 男女1固定ペア: ペアを同サイドに固定し、相手を探索
           const pairedMale = malePool[0]
           const pairedFemale = femalePool[0]
           const otherMale = attempt === 0
@@ -273,55 +298,61 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
           ;[sideA, sideB] = Math.random() < 0.5
             ? [[pairedMale, pairedFemale], [otherMale, otherFemale]]
             : [[otherMale, otherFemale], [pairedMale, pairedFemale]]
+
         } else {
-          // ミックスダブルス：1男 + 1女 を各サイドに確保
+          // ペアなし: ランダムに男女各2名を選択
           const pickedMales = attempt === 0 ? malePool.slice(0, 2) : shuffle(malePool).slice(0, 2)
           const pickedFemales = attempt === 0 ? femalePool.slice(0, 2) : shuffle(femalePool).slice(0, 2)
           candidates = [...pickedMales, ...pickedFemales]
-          sideA = [pickedMales[0], pickedFemales[0]]
-          sideB = [pickedMales[1], pickedFemales[1]]
+          ;[sideA, sideB] = Math.random() < 0.5
+            ? [[pickedMales[0], pickedFemales[0]], [pickedMales[1], pickedFemales[1]]]
+            : [[pickedMales[1], pickedFemales[1]], [pickedMales[0], pickedFemales[0]]]
         }
-      } else if (twoPairsFixed) {
-        // 2ペア確定：両ペアをそれぞれ対面サイドに固定
-        const pair1 = activePairsInPool[0].playerIds
-        const pair2 = activePairsInPool[1].playerIds
+
+      } else if (poolActivePairs.length >= 2) {
+        // 非ミックス2固定ペア: side を swap するだけ
+        const pair1 = poolActivePairs[0].playerIds
+        const pair2 = poolActivePairs[1].playerIds
         candidates = [...pair1, ...pair2]
-        ;[sideA, sideB] = Math.random() < 0.5
+        ;[sideA, sideB] = attempt === 0
           ? [[...pair1], [...pair2]]
           : [[...pair2], [...pair1]]
-      } else if (activePair) {
-        // 固定ペアを両メンバー強制包含
-        const pairIds = activePair.playerIds
+
+      } else if (poolActivePairs.length === 1) {
+        // 1固定ペア: ペアを確保しフィラーを探索
+        const pairIds = poolActivePairs[0].playerIds
         const rest = pool.filter((id) => !pairIds.includes(id))
         const fillers = attempt === 0 ? rest.slice(0, ppm - 2) : shuffle(rest).slice(0, ppm - 2)
         candidates = [...pairIds, ...fillers]
-        ;[sideA, sideB] = constrainedSplitDoubles(candidates, pairs)
+        ;[sideA, sideB] = splitDoublesIntoSides(candidates, poolActivePairs)
+
       } else {
+        // ペアなし: プールからランダム選択
         candidates = attempt === 0 ? pool.slice(0, ppm) : shuffle(pool).slice(0, ppm)
         if (courtFormat === 'doubles') {
-          ;[sideA, sideB] = constrainedSplitDoubles(candidates, pairs)
+          ;[sideA, sideB] = splitDoublesIntoSides(candidates, [])
         } else {
           sideA = [candidates[0]]
           sideB = [candidates[1]]
         }
       }
 
-      // スキップペナルティ：remaining 内の順位で計算
-      const avgIdx =
-        candidates.reduce((sum, id) => sum + remaining.indexOf(id), 0) / ppm
-      const skipPenalty = avgIdx * GAME_COUNT_SKIP_PENALTY
+      // スキップペナルティ: 最小ゲーム数との差の合計（位置インデックスではなく実ゲーム数差を使用）
+      const skipPenalty = candidates.reduce(
+        (sum, id) => sum + Math.max(0, (gameCounts.get(id) ?? 0) - minCount),
+        0
+      ) * GAME_COUNT_SKIP_PENALTY
 
-      const score = scoreAssignment(sideA, sideB, recentHistory, playerMap, rankBalanceEnabled)
-      const totalScore = score + skipPenalty
+      const score = scoreAssignment(sideA, sideB, recentHistory, playerMap, rankBalanceEnabled) + skipPenalty
 
-      if (totalScore < bestTotalScore) {
-        bestTotalScore = totalScore
+      if (score < bestScore) {
+        bestScore = score
         bestCandidates = candidates
         bestSideA = sideA
         bestSideB = sideB
       }
 
-      if (bestTotalScore === 0) break
+      if (bestScore === 0) break
     }
 
     results.push({

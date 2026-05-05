@@ -1,10 +1,11 @@
 export const TEAMMATE_REPEAT_PENALTY = 100
 export const OPPONENT_REPEAT_PENALTY = 50
-export const RANK_IMBALANCE_FACTOR = 80   // quadratic: diff^2 * factor
+export const RANK_IMBALANCE_FACTOR = 80   // quadratic: diff^2 * factor（チーム間ランク差）
+export const RANK_VARIANCE_FACTOR = 20    // linear: |rank_a - rank_b| * factor（チーム内ランク差）
 export const RECENCY_WINDOW = 10
 export const GENERATION_ATTEMPTS = 50
 export const SELECTION_WINDOW = 2         // strict top-ppm の外から何人まで候補に含めるか
-export const GAME_COUNT_SKIP_PENALTY = 20 // 試合数の少ない選手を飛ばした際のコスト（インデックス平均 × 係数）
+export const GAME_COUNT_SKIP_PENALTY = 20 // 試合数の少ない選手を飛ばした際のコスト（ゲーム数差分 × 係数）
 
 export const RANK_LABELS: Record<string, string> = {
   A: 'A',
