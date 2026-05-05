@@ -81,8 +81,8 @@ function combinations<T>(arr: T[], k: number): T[][] {
 // ─────────────────────────────────────────────
 
 /**
- * 有効ペアを収集する。
- * 両メンバーが availableSet に存在し、かつ同一プレイヤーが複数ペアに重複しない（greedy）。
+ * 有効ペアを収集する（greedy: 先頭優先、重複プレイヤーは除外）。
+ * 内部利用。外部からは generatePairSets を使うこと。
  */
 function collectActivePairs(pairs: FixedPair[], availableSet: Set<string>): FixedPair[] {
   const result: FixedPair[] = []
@@ -94,6 +94,38 @@ function collectActivePairs(pairs: FixedPair[], availableSet: Set<string>): Fixe
     }
   }
   return result
+}
+
+/**
+ * 試すべき「ペアセット」の一覧を返す。
+ *
+ * 同一プレイヤーを含む競合ペア（A&B・A&C等）がある場合、
+ * 各ペアを先頭に置いてgreedy収集した結果を全て列挙する。
+ * これにより「A&Bで試す」「A&Cで試す」を両方試し、
+ * スコアリングで最良の組み合わせを選択できる。
+ *
+ * 競合なしの場合は1つのセットのみ返す。
+ * 有効ペアが存在しない場合は [[]]（空セット1つ）を返す。
+ */
+function generatePairSets(allPairs: FixedPair[], availableSet: Set<string>): FixedPair[][] {
+  const available = allPairs.filter((p) => p.playerIds.every((id) => availableSet.has(id)))
+  if (available.length === 0) return [[]]
+
+  const tried = new Set<string>()
+  const results: FixedPair[][] = []
+
+  for (let i = 0; i < available.length; i++) {
+    // ペアiを先頭に並べ替えてgreedy収集
+    const reordered = [available[i], ...available.slice(0, i), ...available.slice(i + 1)]
+    const selected = collectActivePairs(reordered, availableSet)
+    const key = selected.map((p) => p.id).sort().join('|')
+    if (!tried.has(key)) {
+      tried.add(key)
+      results.push(selected)
+    }
+  }
+
+  return results.length > 0 ? results : [[]]
 }
 
 /**
@@ -329,63 +361,77 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
       const females = remaining.filter((id) => playerMap.get(id)?.gender === 'female')
 
       if (males.length >= 2 && females.length >= 2) {
-        // 男女ペアのみ対象に有効ペア収集
         const mixedPairCandidates = pairs.filter(({ playerIds: [p1, p2] }) =>
           remainingSet.has(p1) && remainingSet.has(p2) &&
           ((playerMap.get(p1)?.gender === 'male' && playerMap.get(p2)?.gender === 'female') ||
            (playerMap.get(p1)?.gender === 'female' && playerMap.get(p2)?.gender === 'male'))
         )
-        const mixedActivePairs = collectActivePairs(mixedPairCandidates, remainingSet)
-
-        const pairedMales = mixedActivePairs.map((p) =>
-          p.playerIds.find((id) => playerMap.get(id)?.gender === 'male')!
-        )
-        const pairedFemales = mixedActivePairs.map((p) =>
-          p.playerIds.find((id) => playerMap.get(id)?.gender === 'female')!
-        )
-        const mixedPairSet = new Set([...pairedMales, ...pairedFemales])
-
-        // malePool[i] と femalePool[i] が同ペアになるよう alignment を保つ
-        const malePool = [...pairedMales, ...males.filter((id) => !mixedPairSet.has(id))].slice(0, 2 + SELECTION_WINDOW)
-        const femalePool = [...pairedFemales, ...females.filter((id) => !mixedPairSet.has(id))].slice(0, 2 + SELECTION_WINDOW)
-
-        assignments = enumerateMixed(malePool, femalePool, mixedActivePairs)
+        const mixedPairSets = generatePairSets(mixedPairCandidates, remainingSet)
+        assignments = mixedPairSets.flatMap((mixedActivePairs) => {
+          const pairedMales = mixedActivePairs.map((p) =>
+            p.playerIds.find((id) => playerMap.get(id)?.gender === 'male')!
+          )
+          const pairedFemales = mixedActivePairs.map((p) =>
+            p.playerIds.find((id) => playerMap.get(id)?.gender === 'female')!
+          )
+          const mixedPairSet = new Set([...pairedMales, ...pairedFemales])
+          // malePool[i] と femalePool[i] が同ペアになるよう alignment を保つ
+          const malePool = [...pairedMales, ...males.filter((id) => !mixedPairSet.has(id))].slice(0, 2 + SELECTION_WINDOW)
+          const femalePool = [...pairedFemales, ...females.filter((id) => !mixedPairSet.has(id))].slice(0, 2 + SELECTION_WINDOW)
+          return enumerateMixed(malePool, femalePool, mixedActivePairs)
+        })
       } else {
         // 男女どちらかが不足: any と同様にダブルス列挙
-        const pool = buildPool(remaining, collectActivePairs(pairs, remainingSet), ppm + SELECTION_WINDOW)
-        assignments = enumerateDoubles(pool, collectActivePairs(pairs, new Set(pool)))
+        const pairSets = generatePairSets(pairs, remainingSet)
+        assignments = pairSets.flatMap((pairSet) => {
+          const pool = buildPool(remaining, pairSet, ppm + SELECTION_WINDOW)
+          const poolPairs = pairSet.filter((p) => p.playerIds.every((id) => pool.includes(id)))
+          return enumerateDoubles(pool, poolPairs)
+        })
       }
 
     } else if (courtGenderFmt === 'mens') {
       const males = remaining.filter((id) => playerMap.get(id)?.gender === 'male')
       const base = males.length >= ppm ? males : remaining
       const baseSet = new Set(base)
-      const pool = courtFormat === 'doubles'
-        ? buildPool(base, collectActivePairs(pairs, baseSet), ppm + SELECTION_WINDOW)
-        : base.slice(0, ppm + SELECTION_WINDOW)
-      assignments = courtFormat === 'doubles'
-        ? enumerateDoubles(pool, collectActivePairs(pairs, new Set(pool)))
-        : enumerateSingles(pool)
+      if (courtFormat === 'doubles') {
+        const pairSets = generatePairSets(pairs, baseSet)
+        assignments = pairSets.flatMap((pairSet) => {
+          const pool = buildPool(base, pairSet, ppm + SELECTION_WINDOW)
+          const poolPairs = pairSet.filter((p) => p.playerIds.every((id) => pool.includes(id)))
+          return enumerateDoubles(pool, poolPairs)
+        })
+      } else {
+        assignments = enumerateSingles(base.slice(0, ppm + SELECTION_WINDOW))
+      }
 
     } else if (courtGenderFmt === 'womens') {
       const females = remaining.filter((id) => playerMap.get(id)?.gender === 'female')
       const base = females.length >= ppm ? females : remaining
       const baseSet = new Set(base)
-      const pool = courtFormat === 'doubles'
-        ? buildPool(base, collectActivePairs(pairs, baseSet), ppm + SELECTION_WINDOW)
-        : base.slice(0, ppm + SELECTION_WINDOW)
-      assignments = courtFormat === 'doubles'
-        ? enumerateDoubles(pool, collectActivePairs(pairs, new Set(pool)))
-        : enumerateSingles(pool)
+      if (courtFormat === 'doubles') {
+        const pairSets = generatePairSets(pairs, baseSet)
+        assignments = pairSets.flatMap((pairSet) => {
+          const pool = buildPool(base, pairSet, ppm + SELECTION_WINDOW)
+          const poolPairs = pairSet.filter((p) => p.playerIds.every((id) => pool.includes(id)))
+          return enumerateDoubles(pool, poolPairs)
+        })
+      } else {
+        assignments = enumerateSingles(base.slice(0, ppm + SELECTION_WINDOW))
+      }
 
     } else {
-      // any（または mixed で性別不足時のフォールバック以外）
-      const pool = courtFormat === 'doubles'
-        ? buildPool(remaining, collectActivePairs(pairs, remainingSet), ppm + SELECTION_WINDOW)
-        : remaining.slice(0, ppm + SELECTION_WINDOW)
-      assignments = courtFormat === 'doubles'
-        ? enumerateDoubles(pool, collectActivePairs(pairs, new Set(pool)))
-        : enumerateSingles(pool)
+      // any
+      if (courtFormat === 'doubles') {
+        const pairSets = generatePairSets(pairs, remainingSet)
+        assignments = pairSets.flatMap((pairSet) => {
+          const pool = buildPool(remaining, pairSet, ppm + SELECTION_WINDOW)
+          const poolPairs = pairSet.filter((p) => p.playerIds.every((id) => pool.includes(id)))
+          return enumerateDoubles(pool, poolPairs)
+        })
+      } else {
+        assignments = enumerateSingles(remaining.slice(0, ppm + SELECTION_WINDOW))
+      }
     }
 
     // 有効な割り当てが見つからない場合はコートをスキップ
