@@ -144,10 +144,16 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
     if (remaining.length < ppm) continue
 
     // ── 固定ペアを remaining から検索（モード共通） ──
-    // 両メンバーが remaining にいる場合のみ有効
-    const activePairInRemaining = pairs.find((p) =>
-      p.playerIds.every((id) => remaining.includes(id))
-    )
+    // 両メンバーが remaining にいる場合のみ有効。複数ペアは conflict（同一プレイヤーを共有）を除外して収集
+    const activePairsInRemaining: FixedPair[] = []
+    const usedInActivePairs = new Set<string>()
+    for (const p of pairs) {
+      if (p.playerIds.every((id) => remaining.includes(id) && !usedInActivePairs.has(id))) {
+        activePairsInRemaining.push(p)
+        p.playerIds.forEach((id) => usedInActivePairs.add(id))
+      }
+    }
+    const activePairInRemaining = activePairsInRemaining[0] as FixedPair | undefined
 
     // ── 性別ハード制約によるプール絞り込み ──
     let pool: string[]
@@ -232,10 +238,20 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
       bestSideB = bestCandidates.slice(ppm / 2)
     }
 
-    // 非ミックスダブルス用固定ペア
-    const activePair = !useMixedMode && courtFormat === 'doubles'
-      ? pairs.find((pair) => pair.playerIds.every((id) => pool.includes(id)))
-      : undefined
+    // 非ミックスダブルス用固定ペア（pool内で conflict なしに収集）
+    let activePairsInPool: FixedPair[] = []
+    if (!useMixedMode && courtFormat === 'doubles') {
+      const usedInPool = new Set<string>()
+      for (const pair of pairs) {
+        if (pair.playerIds.every((id) => pool.includes(id) && !usedInPool.has(id))) {
+          activePairsInPool.push(pair)
+          pair.playerIds.forEach((id) => usedInPool.add(id))
+        }
+      }
+    }
+    const activePair = activePairsInPool[0] as FixedPair | undefined
+    // ダブルスで2ペア揃っている場合：両ペアを両サイドに固定（フィラー不要）
+    const twoPairsFixed = activePairsInPool.length >= 2
 
     for (let attempt = 0; attempt < GENERATION_ATTEMPTS; attempt++) {
       let candidates: string[]
@@ -265,6 +281,14 @@ export function generateMatchAssignments(params: GenerateParams): ActiveMatch[] 
           sideA = [pickedMales[0], pickedFemales[0]]
           sideB = [pickedMales[1], pickedFemales[1]]
         }
+      } else if (twoPairsFixed) {
+        // 2ペア確定：両ペアをそれぞれ対面サイドに固定
+        const pair1 = activePairsInPool[0].playerIds
+        const pair2 = activePairsInPool[1].playerIds
+        candidates = [...pair1, ...pair2]
+        ;[sideA, sideB] = Math.random() < 0.5
+          ? [[...pair1], [...pair2]]
+          : [[...pair2], [...pair1]]
       } else if (activePair) {
         // 固定ペアを両メンバー強制包含
         const pairIds = activePair.playerIds

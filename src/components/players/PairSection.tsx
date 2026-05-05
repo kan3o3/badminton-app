@@ -14,13 +14,18 @@ export default function PairSection({ players, pairs, addPair, deletePair }: Pai
 
   const activePlayers = players.filter((p) => p.status !== 'absent')
 
+  const isDuplicatePair = (a: string, b: string) =>
+    pairs.some((p) => p.playerIds.includes(a) && p.playerIds.includes(b))
+
   const handleToggle = (id: string) => {
     if (selected.includes(id)) {
       setSelected(selected.filter((s) => s !== id))
     } else if (selected.length < 2) {
       const next = [...selected, id]
       if (next.length === 2) {
-        addPair([next[0], next[1]])
+        if (!isDuplicatePair(next[0], next[1])) {
+          addPair([next[0], next[1]])
+        }
         setSelected([])
         setSelecting(false)
       } else {
@@ -35,7 +40,6 @@ export default function PairSection({ players, pairs, addPair, deletePair }: Pai
   }
 
   const getPlayer = (id: string) => players.find((p) => p.id === id)
-  const existingPairIds = new Set(pairs.flatMap((p) => p.playerIds))
 
   return (
     <div className="mt-6">
@@ -105,7 +109,7 @@ export default function PairSection({ players, pairs, addPair, deletePair }: Pai
           </div>
           <div className="p-3 grid grid-cols-2 gap-2">
             {activePlayers
-              .filter((p) => !existingPairIds.has(p.id) || selected.includes(p.id))
+              .filter((p) => !selected.includes(p.id) || selected[0] === p.id)
               .map((p) => {
                 const isSelected = selected.includes(p.id)
                 return (
