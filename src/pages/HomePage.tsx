@@ -163,7 +163,7 @@ export default function HomePage() {
           <button
             onClick={() => setViewRound((v) => Math.max(1, v - 1))}
             disabled={viewRound <= 1}
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-white shadow-sm text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-lg font-bold"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white shadow-sm text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-lg font-bold"
           >
             ‹
           </button>
@@ -176,10 +176,19 @@ export default function HomePage() {
           <button
             onClick={() => setViewRound((v) => Math.min(currentRound, v + 1))}
             disabled={viewRound >= currentRound}
-            className="w-8 h-8 flex items-center justify-center rounded-xl bg-white shadow-sm text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-lg font-bold"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white shadow-sm text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-lg font-bold"
           >
             ›
           </button>
+        </div>
+      )}
+
+      {/* ── 生成不可ヒント ── */}
+      {!canGenerate && isViewingCurrent && !swapMode && activeMatches.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-sm text-amber-700">
+          {unfinishedWithoutScore.length > 0
+            ? `スコア未入力のコートがあります（${unfinishedWithoutScore.length}コート）`
+            : `参加中 ${activePlayers.length}人（最低${minPpm}人必要）`}
         </div>
       )}
 

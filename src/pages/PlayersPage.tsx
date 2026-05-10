@@ -78,6 +78,23 @@ export default function PlayersPage() {
         </Button>
       </div>
 
+      {players.length > 0 && (
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => { players.forEach(p => setPlayerStatus(p.id, 'active')); initWaitingQueue() }}
+            className="flex-1 py-2 rounded-xl text-sm font-semibold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 active:bg-green-200"
+          >
+            全員参加
+          </button>
+          <button
+            onClick={() => { players.forEach(p => setPlayerStatus(p.id, 'resting')); initWaitingQueue() }}
+            className="flex-1 py-2 rounded-xl text-sm font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 active:bg-amber-200"
+          >
+            全員休憩
+          </button>
+        </div>
+      )}
+
       <PlayerList
         players={players}
         gameCounts={gameCounts}

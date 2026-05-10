@@ -48,15 +48,15 @@ function PlayerChip({
       {player.gender === 'male' && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dimmed ? 'bg-gray-200' : 'bg-sky-400'}`} />}
       {player.gender === 'female' && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dimmed ? 'bg-gray-200' : 'bg-rose-400'}`} />}
       {playerNumber !== undefined && (
-        <span className={`text-[10px] font-mono ${dimmed ? 'text-gray-300' : 'text-gray-400'}`}>#{playerNumber}</span>
+        <span className={`text-xs font-bold font-mono px-1 py-0.5 rounded ${dimmed ? 'bg-gray-100 text-gray-300' : 'bg-gray-200 text-gray-600'}`}>#{playerNumber}</span>
       )}
       <span className={`font-semibold ${dimmed ? 'text-gray-300' : 'text-gray-800'}`}>{player.name}</span>
       {player.rank && (
-        <span className={`text-[10px] font-bold px-1 py-0.5 rounded leading-none ${dimmed ? 'bg-gray-100 text-gray-300' : 'bg-blue-100 text-blue-600'}`}>
+        <span className={`text-xs font-bold px-1 py-0.5 rounded leading-none ${dimmed ? 'bg-gray-100 text-gray-300' : 'bg-blue-100 text-blue-600'}`}>
           {player.rank}
         </span>
       )}
-      <span className={`text-[10px] font-medium px-1 py-0.5 rounded-full leading-none ${dimmed ? 'bg-gray-100 text-gray-300' : 'bg-white text-gray-400 border border-gray-200'}`}>
+      <span className={`text-xs font-medium px-1 py-0.5 rounded-full leading-none ${dimmed ? 'bg-gray-100 text-gray-300' : 'bg-white text-gray-400 border border-gray-200'}`}>
         {count}
       </span>
     </button>
@@ -80,8 +80,8 @@ export default function WaitingList({
   if (!hasWaiting && !hasResting) {
     return (
       <div className={`bg-white rounded-2xl px-4 py-3 shadow-sm flex items-center gap-2 ${swapMode ? 'ring-2 ring-blue-400' : ''}`}>
-        <span className="text-xs font-semibold text-gray-400">待機中</span>
-        <span className="text-xs text-gray-300">なし</span>
+        <span className="text-sm font-semibold text-gray-400">待機中</span>
+        <span className="text-sm text-gray-300">なし</span>
       </div>
     )
   }
@@ -92,8 +92,8 @@ export default function WaitingList({
       {hasWaiting && (
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-semibold text-gray-600">待機中</span>
-            <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">{playerIds.length}人</span>
+            <span className="text-sm font-semibold text-gray-600">待機中</span>
+            <span className="text-xs font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">{playerIds.length}人</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {playerIds.map((id) => {
@@ -121,8 +121,8 @@ export default function WaitingList({
       {hasResting && (
         <div className={hasWaiting ? 'pt-2.5 border-t border-gray-100' : ''}>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-semibold text-gray-400">休憩中</span>
-            <span className="text-[10px] font-bold bg-amber-50 text-amber-500 px-1.5 py-0.5 rounded-full">{restingPlayers.length}人</span>
+            <span className="text-sm font-semibold text-gray-400">休憩中</span>
+            <span className="text-xs font-bold bg-amber-50 text-amber-500 px-1.5 py-0.5 rounded-full">{restingPlayers.length}人</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {restingPlayers.map((player) => (
