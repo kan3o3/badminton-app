@@ -170,7 +170,7 @@ export default function HomePage() {
           <div className="flex items-center gap-1.5 bg-white shadow-sm rounded-2xl px-4 py-1.5">
             <span className="text-sm font-bold text-gray-700">第 {viewRound} 回</span>
             {isViewingCurrent && (
-              <span className="text-[10px] font-bold bg-green-500 text-white px-1.5 py-0.5 rounded-full">現在</span>
+              <span className="text-xs font-bold bg-green-500 text-white px-1.5 py-0.5 rounded-full">現在</span>
             )}
           </div>
           <button

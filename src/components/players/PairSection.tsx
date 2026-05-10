@@ -71,12 +71,12 @@ export default function PairSection({ players, pairs, addPair, deletePair }: Pai
               <div className="flex-1 flex items-center gap-2">
                 <span className="text-sm font-semibold text-gray-800">{p1?.name ?? '?'}</span>
                 {p1?.rank && (
-                  <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded-lg">{p1.rank}</span>
+                  <span className="text-xs bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded-lg">{p1.rank}</span>
                 )}
                 <span className="text-gray-300 text-sm font-bold">＆</span>
                 <span className="text-sm font-semibold text-gray-800">{p2?.name ?? '?'}</span>
                 {p2?.rank && (
-                  <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded-lg">{p2.rank}</span>
+                  <span className="text-xs bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded-lg">{p2.rank}</span>
                 )}
               </div>
               <button
@@ -99,13 +99,13 @@ export default function PairSection({ players, pairs, addPair, deletePair }: Pai
                 {selected.length === 0 ? '1人目を選択' : `${players.find(p => p.id === selected[0])?.name} ＋ 2人目を選択`}
               </span>
               {selected.length === 0 && (
-                <span className="text-[10px] text-green-500 bg-green-100 px-1.5 py-0.5 rounded-full">1 / 2</span>
+                <span className="text-xs text-green-500 bg-green-100 px-1.5 py-0.5 rounded-full">1 / 2</span>
               )}
               {selected.length === 1 && (
-                <span className="text-[10px] text-green-500 bg-green-100 px-1.5 py-0.5 rounded-full">2 / 2</span>
+                <span className="text-xs text-green-500 bg-green-100 px-1.5 py-0.5 rounded-full">2 / 2</span>
               )}
             </div>
-            <button onClick={cancelSelecting} className="text-xs text-gray-400 hover:text-gray-600 font-medium">キャンセル</button>
+            <button onClick={cancelSelecting} className="text-sm text-gray-400 hover:text-gray-600 font-medium">キャンセル</button>
           </div>
           <div className="p-3 grid grid-cols-2 gap-2">
             {activePlayers
@@ -124,7 +124,7 @@ export default function PairSection({ players, pairs, addPair, deletePair }: Pai
                   >
                     <span>{p.name}</span>
                     {p.rank && (
-                      <span className={`text-[10px] font-bold px-1 py-0.5 rounded leading-none ${isSelected ? 'bg-white/30 text-white' : 'bg-blue-100 text-blue-600'}`}>
+                      <span className={`text-xs font-bold px-1 py-0.5 rounded leading-none ${isSelected ? 'bg-white/30 text-white' : 'bg-blue-100 text-blue-600'}`}>
                         {p.rank}
                       </span>
                     )}

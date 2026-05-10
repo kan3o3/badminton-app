@@ -16,7 +16,7 @@ export default function BottomNav() {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center justify-center py-2 min-h-[58px] text-xs font-medium transition-colors ${
+              `flex-1 flex flex-col items-center justify-center py-2 min-h-[58px] text-sm font-medium transition-colors ${
                 isActive ? 'text-green-600' : 'text-gray-400'
               }`
             }

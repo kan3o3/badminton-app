@@ -81,7 +81,7 @@ function formatTimer(seconds: number) {
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1 mb-2 mt-5">{children}</h2>
+    <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest px-1 mb-2 mt-5">{children}</h2>
   )
 }
 
@@ -121,7 +121,7 @@ export default function SettingsPage() {
 
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <p className="font-medium text-gray-700 mb-0.5">デフォルト形式</p>
-          <p className="text-xs text-gray-400 mb-3">コート個別に設定していない場合に適用</p>
+          <p className="text-sm text-gray-400 mb-3">コート個別に設定していない場合に適用</p>
           <div className="flex gap-2">
             {(['doubles', 'singles'] as const).map((fmt) => (
               <button
@@ -153,7 +153,7 @@ export default function SettingsPage() {
                         <button
                           key={f}
                           onClick={() => setCourtFormat(i, f)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                          className={`px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors ${
                             fmt === f
                               ? 'bg-green-600 text-white shadow-sm'
                               : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -174,13 +174,13 @@ export default function SettingsPage() {
         {/* 性別形式 */}
         <div className="bg-white rounded-2xl p-4 shadow-sm mt-2">
           <p className="font-medium text-gray-700 mb-0.5">デフォルト性別形式</p>
-          <p className="text-xs text-gray-400 mb-3">コート個別に設定していない場合に適用</p>
+          <p className="text-sm text-gray-400 mb-3">コート個別に設定していない場合に適用</p>
           <div className="flex gap-2">
             {(courtConfig.format === 'singles' ? GENDER_FORMAT_OPTIONS_SINGLES : GENDER_FORMAT_OPTIONS_DOUBLES).map(({ value, label }) => (
               <button
                 key={value}
                 onClick={() => setCourtConfig({ genderFormat: value })}
-                className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
                   (courtConfig.genderFormat ?? 'any') === value
                     ? 'bg-green-600 text-white shadow-sm'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -208,7 +208,7 @@ export default function SettingsPage() {
                         <button
                           key={value}
                           onClick={() => setGenderFormat(i, value)}
-                          className={`px-2 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                          className={`px-2 py-1.5 rounded-xl text-sm font-semibold transition-colors ${
                             gfmt === value
                               ? 'bg-green-600 text-white shadow-sm'
                               : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -240,7 +240,7 @@ export default function SettingsPage() {
         <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
           <div>
             <p className="font-medium text-gray-700">レベル差を考慮した組み合わせ</p>
-            <p className="text-xs text-gray-400 mt-0.5">OFFにするとランクを無視してマッチング</p>
+            <p className="text-sm text-gray-400 mt-0.5">OFFにするとランクを無視してマッチング</p>
           </div>
           <Toggle
             value={rankBalanceEnabled}
@@ -251,7 +251,7 @@ export default function SettingsPage() {
         <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
           <div>
             <p className="font-medium text-gray-700">スコア記入</p>
-            <p className="text-xs text-gray-400 mt-0.5">ONにするとスコア未入力のまま次の試合を生成できない</p>
+            <p className="text-sm text-gray-400 mt-0.5">ONにするとスコア未入力のまま次の試合を生成できない</p>
           </div>
           <Toggle
             value={courtConfig.requireScore ?? false}
