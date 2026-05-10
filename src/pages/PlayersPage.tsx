@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import type { Player, PlayerStatus, SkillRank, Gender } from '@/types'
 import useAppStore from '@/store/useAppStore'
 import PlayerList from '@/components/players/PlayerList'
@@ -37,6 +37,8 @@ export default function PlayersPage() {
   const [addOpen, setAddOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Player | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Player | null>(null)
+  const [bulkMode, setBulkMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const addFormRef = useRef<PlayerFormHandle>(null)
   const editFormRef = useRef<PlayerFormHandle>(null)
@@ -69,28 +71,85 @@ export default function PlayersPage() {
     setDeleteTarget(null)
   }
 
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }, [])
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === players.length) setSelectedIds(new Set())
+    else setSelectedIds(new Set(players.map(p => p.id)))
+  }
+
+  const applyStatus = (status: PlayerStatus) => {
+    selectedIds.forEach(id => setPlayerStatus(id, status))
+    initWaitingQueue()
+    setSelectedIds(new Set())
+  }
+
+  const exitBulkMode = () => {
+    setBulkMode(false)
+    setSelectedIds(new Set())
+  }
+
   return (
     <div className="p-4">
-      <div className="flex items-center justify-between mb-4 pt-1">
+      <div className="flex items-center justify-between mb-3 pt-1">
         <h1 className="text-xl font-bold text-gray-800">選手管理</h1>
-        <Button size="sm" onClick={() => setAddOpen(true)}>
-          ＋ 追加
-        </Button>
+        <div className="flex gap-2">
+          {players.length > 0 && (
+            bulkMode ? (
+              <Button size="sm" variant="secondary" onClick={exitBulkMode}>
+                ✕ 完了
+              </Button>
+            ) : (
+              <Button size="sm" variant="secondary" onClick={() => setBulkMode(true)}>
+                一括編集
+              </Button>
+            )
+          )}
+          {!bulkMode && (
+            <Button size="sm" onClick={() => setAddOpen(true)}>
+              ＋ 追加
+            </Button>
+          )}
+        </div>
       </div>
 
-      {players.length > 0 && (
-        <div className="flex gap-2 mb-4">
+      {bulkMode && (
+        <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-3">
+          <span className="text-sm text-blue-700 font-medium flex-1">
+            {selectedIds.size}人選択
+          </span>
           <button
-            onClick={() => { players.forEach(p => setPlayerStatus(p.id, 'active')); initWaitingQueue() }}
-            className="flex-1 py-2 rounded-xl text-sm font-semibold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 active:bg-green-200"
+            onClick={handleSelectAll}
+            className="text-sm text-blue-600 font-semibold px-2 py-1 rounded-lg hover:bg-blue-100 active:bg-blue-200"
           >
-            全員参加
+            {selectedIds.size === players.length ? '全解除' : '全選択'}
           </button>
           <button
-            onClick={() => { players.forEach(p => setPlayerStatus(p.id, 'resting')); initWaitingQueue() }}
-            className="flex-1 py-2 rounded-xl text-sm font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 active:bg-amber-200"
+            onClick={() => applyStatus('active')}
+            disabled={selectedIds.size === 0}
+            className="text-sm font-semibold px-2.5 py-1 rounded-lg bg-green-500 text-white hover:bg-green-600 active:bg-green-700 disabled:opacity-40"
           >
-            全員休憩
+            参加
+          </button>
+          <button
+            onClick={() => applyStatus('resting')}
+            disabled={selectedIds.size === 0}
+            className="text-sm font-semibold px-2.5 py-1 rounded-lg bg-amber-400 text-white hover:bg-amber-500 active:bg-amber-600 disabled:opacity-40"
+          >
+            休憩
+          </button>
+          <button
+            onClick={() => applyStatus('absent')}
+            disabled={selectedIds.size === 0}
+            className="text-sm font-semibold px-2.5 py-1 rounded-lg bg-gray-400 text-white hover:bg-gray-500 active:bg-gray-600 disabled:opacity-40"
+          >
+            不参加
           </button>
         </div>
       )}
@@ -104,6 +163,9 @@ export default function PlayersPage() {
           setPlayerStatus(id, status)
           initWaitingQueue()
         }}
+        bulkMode={bulkMode}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelect}
       />
 
       <PairSection players={players} pairs={pairs} addPair={addPair} deletePair={deletePair} />

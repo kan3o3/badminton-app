@@ -13,6 +13,9 @@ interface PlayerListProps {
   onEdit: (player: Player) => void
   onDelete: (player: Player) => void
   onStatusChange: (id: string, status: PlayerStatus) => void
+  bulkMode?: boolean
+  selectedIds?: Set<string>
+  onToggleSelect?: (id: string) => void
 }
 
 const filters: { value: 'all' | PlayerStatus; label: string }[] = [
@@ -29,7 +32,7 @@ const sortOptions: { value: SortBy; label: string }[] = [
   { value: 'games', label: '試合数順' },
 ]
 
-export default function PlayerList({ players, gameCounts, onEdit, onDelete, onStatusChange }: PlayerListProps) {
+export default function PlayerList({ players, gameCounts, onEdit, onDelete, onStatusChange, bulkMode, selectedIds, onToggleSelect }: PlayerListProps) {
   const playerNumbers = usePlayerNumbers()
   const [filter, setFilter] = useState<'all' | PlayerStatus>('all')
   const [sortBy, setSortBy] = useState<SortBy>('createdAt')
@@ -113,6 +116,9 @@ export default function PlayerList({ players, gameCounts, onEdit, onDelete, onSt
               onEdit={() => onEdit(player)}
               onDelete={() => onDelete(player)}
               onStatusChange={(status) => onStatusChange(player.id, status)}
+              bulkMode={bulkMode}
+              selected={selectedIds?.has(player.id) ?? false}
+              onToggleSelect={() => onToggleSelect?.(player.id)}
             />
           ))}
         </div>
