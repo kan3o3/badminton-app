@@ -65,7 +65,7 @@ export default function PlayerList({ players, gameCounts, onEdit, onDelete, onSt
           <button
             key={value}
             onClick={() => setSortBy(value)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
               sortBy === value
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
@@ -89,7 +89,7 @@ export default function PlayerList({ players, gameCounts, onEdit, onDelete, onSt
             }`}
           >
             {label}
-            <span className={`ml-1 text-xs ${filter === value ? 'opacity-80' : 'opacity-50'}`}>
+            <span className={`ml-1 text-sm ${filter === value ? 'opacity-80' : 'opacity-50'}`}>
               {value === 'all' ? players.length : players.filter((p) => p.status === value).length}
             </span>
           </button>

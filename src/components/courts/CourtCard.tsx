@@ -68,10 +68,10 @@ function PlayerName({ playerId, players, playerNumbers, swapMode, selected, isTa
     >
       {player.gender === 'male' && <span className="w-2 h-2 rounded-full bg-sky-400 flex-shrink-0" />}
       {player.gender === 'female' && <span className="w-2 h-2 rounded-full bg-rose-400 flex-shrink-0" />}
-      {num !== undefined && <span className="text-[10px] text-gray-400 font-mono">#{num}</span>}
+      {num !== undefined && <span className="text-xs bg-gray-100 text-gray-600 font-bold px-1 py-0.5 rounded font-mono">#{num}</span>}
       <span className="text-gray-800">{player.name}</span>
       {player.rank && (
-        <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1 py-0.5 rounded leading-none">{player.rank}</span>
+        <span className="text-xs bg-blue-100 text-blue-600 font-bold px-1 py-0.5 rounded leading-none">{player.rank}</span>
       )}
     </button>
   )
@@ -134,7 +134,7 @@ export default function CourtCard({ match, players, swapMode: rawSwapMode, selec
           <button
             onClick={toggleFormat}
             title="形式を切り替え"
-            className="text-[10px] text-white/80 border border-white/30 rounded-md px-1.5 py-0.5 hover:bg-white/15 active:bg-white/25 leading-tight"
+            className="text-xs text-white/80 border border-white/30 rounded-md px-1.5 py-0.5 hover:bg-white/15 active:bg-white/25 leading-tight"
           >
             {formatLabel}
           </button>
@@ -142,7 +142,7 @@ export default function CourtCard({ match, players, swapMode: rawSwapMode, selec
 
         {match.finished ? (
           <>
-            <span className="text-white/70 text-xs ml-1">終了</span>
+            <span className="text-white/70 text-sm ml-1">終了</span>
             {scoreLabel && (
               <span className="ml-auto bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-lg">{scoreLabel}</span>
             )}
@@ -187,7 +187,7 @@ export default function CourtCard({ match, players, swapMode: rawSwapMode, selec
             />
           ))}
         </div>
-        <span className="shrink-0 text-xs font-bold text-gray-300 tracking-widest">VS</span>
+        <span className="shrink-0 text-sm font-bold text-gray-300 tracking-widest">VS</span>
         <div className="flex-1 flex flex-col gap-1 items-end">
           {match.sideB.playerIds.map((id) => (
             <PlayerName
@@ -222,13 +222,13 @@ export default function CourtCard({ match, players, swapMode: rawSwapMode, selec
               />
               <button
                 onClick={handleScoreSave}
-                className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-xl font-medium"
+                className="text-sm bg-green-600 text-white px-3 py-1.5 rounded-xl font-medium"
               >
                 保存
               </button>
               <button
                 onClick={() => setShowScore(false)}
-                className="text-xs text-gray-400 hover:text-gray-600 px-1"
+                className="text-sm text-gray-400 hover:text-gray-600 px-1"
               >
                 ✕
               </button>
@@ -236,7 +236,7 @@ export default function CourtCard({ match, players, swapMode: rawSwapMode, selec
           ) : (
             <button
               onClick={() => setShowScore(true)}
-              className="text-xs text-gray-400 hover:text-gray-600 active:text-gray-800 flex items-center gap-1"
+              className="text-sm text-gray-400 hover:text-gray-600 active:text-gray-800 flex items-center gap-1"
             >
               {scoreLabel
                 ? <><span className="text-green-500">●</span> {scoreLabel}</>

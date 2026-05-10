@@ -44,7 +44,7 @@ function PlayerLabel({
           : 'cursor-default'
       }`}
     >
-      {num !== undefined && <span className="text-[10px] text-gray-400 font-mono">#{num}</span>}
+      {num !== undefined && <span className="text-xs bg-gray-100 text-gray-600 font-bold px-1 py-0.5 rounded font-mono">#{num}</span>}
       <span className="text-gray-800">{name}</span>
     </button>
   )
@@ -80,17 +80,17 @@ export default function MatchHistoryCard({ result, players, swapMode, selectedId
       {/* ── ヘッダー ── */}
       <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-gray-500">コート {result.courtIndex + 1}</span>
-          <span className="text-[10px] font-bold bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded-full">
+          <span className="text-sm font-semibold text-gray-500">コート {result.courtIndex + 1}</span>
+          <span className="text-xs font-bold bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded-full">
             第{result.roundNumber}回
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">{formatTime(result.playedAt)}</span>
+          <span className="text-sm text-gray-400">{formatTime(result.playedAt)}</span>
           {!editing && (
             <button
               onClick={() => setEditing(true)}
-              className={`flex items-center gap-1 px-2 py-1 rounded-xl text-xs font-medium border shadow-sm transition-colors ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-xl text-sm font-medium border shadow-sm transition-colors ${
                 hasScore
                   ? 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700'
                   : 'bg-orange-50 border-orange-200 text-orange-500 hover:bg-orange-100'
@@ -117,12 +117,12 @@ export default function MatchHistoryCard({ result, players, swapMode, selectedId
         <div className="shrink-0 flex flex-col items-center gap-0.5">
           {hasScore ? (
             <>
-              <span className={`text-sm font-bold tabular-nums ${winA ? 'text-green-600' : 'text-gray-500'}`}>{result.scoreA}</span>
-              <span className="text-gray-300 font-bold text-xs">−</span>
-              <span className={`text-sm font-bold tabular-nums ${winB ? 'text-green-600' : 'text-gray-500'}`}>{result.scoreB}</span>
+              <span className={`text-base font-bold tabular-nums ${winA ? 'text-green-600' : 'text-gray-500'}`}>{result.scoreA}</span>
+              <span className="text-gray-300 font-bold text-sm">−</span>
+              <span className={`text-base font-bold tabular-nums ${winB ? 'text-green-600' : 'text-gray-500'}`}>{result.scoreB}</span>
             </>
           ) : (
-            <span className="text-xs font-bold text-gray-300 tracking-widest">VS</span>
+            <span className="text-sm font-bold text-gray-300 tracking-widest">VS</span>
           )}
         </div>
 

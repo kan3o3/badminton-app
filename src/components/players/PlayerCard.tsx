@@ -55,7 +55,7 @@ export default function PlayerCard({ player, gameCount, playerNumber, onEdit, on
           aria-label="ステータス変更"
         >
           <span className={`w-2.5 h-2.5 rounded-full ${STATUS_DOT[player.status]}`} />
-          <span className={`text-xs font-medium transition-colors ${
+          <span className={`text-sm font-medium transition-colors ${
             player.status === 'active' ? 'text-green-600'
             : player.status === 'resting' ? 'text-amber-500'
             : 'text-gray-400'
@@ -68,26 +68,26 @@ export default function PlayerCard({ player, gameCount, playerNumber, onEdit, on
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             {playerNumber !== undefined && (
-              <span className="text-xs text-gray-400 font-mono flex-shrink-0">#{playerNumber}</span>
+              <span className="text-sm bg-gray-100 text-gray-600 font-bold px-1.5 py-0.5 rounded-md font-mono flex-shrink-0">#{playerNumber}</span>
             )}
             <span className="font-semibold text-gray-800 truncate">{player.name}</span>
             {player.rank && (
-              <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-lg font-bold leading-none">
+              <span className="text-sm bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-lg font-bold leading-none">
                 {player.rank}
               </span>
             )}
             {player.gender === 'male' && (
-              <span className="text-xs bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded-lg font-bold leading-none flex-shrink-0">
+              <span className="text-sm bg-sky-100 text-sky-600 px-1.5 py-0.5 rounded-lg font-bold leading-none flex-shrink-0">
                 男性
               </span>
             )}
             {player.gender === 'female' && (
-              <span className="text-xs bg-rose-100 text-rose-500 px-1.5 py-0.5 rounded-lg font-bold leading-none flex-shrink-0">
+              <span className="text-sm bg-rose-100 text-rose-500 px-1.5 py-0.5 rounded-lg font-bold leading-none flex-shrink-0">
                 女性
               </span>
             )}
           </div>
-          <div className="text-xs text-gray-400 mt-0.5">{gameCount}試合</div>
+          <div className="text-sm text-gray-500 font-medium mt-0.5">{gameCount}試合</div>
         </div>
 
         {/* 編集・削除 */}
@@ -115,7 +115,7 @@ export default function PlayerCard({ player, gameCount, playerNumber, onEdit, on
             <button
               key={value}
               onClick={() => handleStatusSelect(value)}
-              className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${
                 player.status === value ? active : inactive
               }`}
             >
