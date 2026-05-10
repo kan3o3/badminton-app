@@ -18,15 +18,23 @@ export default function HomePage() {
   const gameHistory = useAppStore((s) => s.gameHistory)
   const sessionDate = useAppStore((s) => s.sessionDate)
   const swapPlayersByIds = useAppStore((s) => s.swapPlayersByIds)
+  const swapHistoryPlayers = useAppStore((s) => s.swapHistoryPlayers)
   const currentRound = useAppStore((s) => s.currentRound)
 
   const [swapMode, setSwapMode] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [viewRound, setViewRound] = useState(0)
+  const [historySwapMode, setHistorySwapMode] = useState(false)
+  const [historySelectedId, setHistorySelectedId] = useState<string | null>(null)
 
   useEffect(() => {
     setViewRound(currentRound)
   }, [currentRound])
+
+  useEffect(() => {
+    setHistorySwapMode(false)
+    setHistorySelectedId(null)
+  }, [viewRound])
 
   useEffect(() => {
     initWaitingQueue()
@@ -84,6 +92,22 @@ export default function HomePage() {
     setSelectedId(null)
   }
 
+  const toggleHistorySwapMode = () => {
+    setHistorySwapMode((v) => !v)
+    setHistorySelectedId(null)
+  }
+
+  const handleHistorySelectPlayer = (id: string) => {
+    if (historySelectedId === null) {
+      setHistorySelectedId(id)
+    } else if (historySelectedId === id) {
+      setHistorySelectedId(null)
+    } else {
+      swapHistoryPlayers(viewRound, historySelectedId, id)
+      setHistorySelectedId(null)
+    }
+  }
+
   const isViewingCurrent = viewRound === currentRound || currentRound === 0
 
   const historyForRound = useMemo(
@@ -109,6 +133,15 @@ export default function HomePage() {
               onClick={toggleSwapMode}
             >
               {swapMode ? '✕ キャンセル' : '⇄ 入替'}
+            </Button>
+          )}
+          {!isViewingCurrent && historyForRound.length > 0 && (
+            <Button
+              variant={historySwapMode ? 'danger' : 'secondary'}
+              size="sm"
+              onClick={toggleHistorySwapMode}
+            >
+              {historySwapMode ? '✕ キャンセル' : '⇄ 入替'}
             </Button>
           )}
           {!swapMode && isViewingCurrent && (
@@ -151,11 +184,11 @@ export default function HomePage() {
       )}
 
       {/* ── 入れ替えガイド ── */}
-      {swapMode && (
+      {(swapMode || historySwapMode) && (
         <div className="bg-blue-500 rounded-2xl px-4 py-3 flex items-center gap-2 shadow-sm">
           <span className="text-white text-lg">👆</span>
           <span className="text-white text-sm font-medium">
-            {selectedId
+            {(swapMode ? selectedId : historySelectedId)
               ? '入れ替え先の選手をタップ（同じ選手で解除）'
               : '入れ替えたい選手をタップ'}
           </span>
@@ -171,7 +204,14 @@ export default function HomePage() {
             </div>
           ) : (
             historyForRound.map((r) => (
-              <MatchHistoryCard key={r.id} result={r} players={players} />
+              <MatchHistoryCard
+                key={r.id}
+                result={r}
+                players={players}
+                swapMode={historySwapMode}
+                selectedId={historySelectedId}
+                onSelectPlayer={handleHistorySelectPlayer}
+              />
             ))
           )}
           <button

@@ -172,8 +172,8 @@ export default function CourtCard({ match, players, swapMode: rawSwapMode, selec
       </div>
 
       {/* ── チーム行 ── */}
-      <div className="flex items-center px-3 py-3 gap-2">
-        <div className="flex-1 flex flex-wrap gap-1 justify-start">
+      <div className="flex items-center px-3 py-2 gap-2">
+        <div className="flex-1 flex flex-col gap-1 items-start">
           {match.sideA.playerIds.map((id) => (
             <PlayerName
               key={id}
@@ -187,10 +187,8 @@ export default function CourtCard({ match, players, swapMode: rawSwapMode, selec
             />
           ))}
         </div>
-        <div className="shrink-0 px-1">
-          <span className="text-xs font-bold text-gray-300 tracking-widest">VS</span>
-        </div>
-        <div className="flex-1 flex flex-wrap gap-1 justify-end">
+        <span className="shrink-0 text-xs font-bold text-gray-300 tracking-widest">VS</span>
+        <div className="flex-1 flex flex-col gap-1 items-end">
           {match.sideB.playerIds.map((id) => (
             <PlayerName
               key={id}

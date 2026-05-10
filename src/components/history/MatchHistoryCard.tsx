@@ -1,22 +1,58 @@
 import { useState } from 'react'
 import type { GameResult, Player } from '@/types'
 import useAppStore from '@/store/useAppStore'
+import { usePlayerNumbers } from '@/hooks/usePlayerNumbers'
 
 interface MatchHistoryCardProps {
   result: GameResult
   players: Player[]
-}
-
-function names(ids: string[], players: Player[]) {
-  return ids.map((id) => players.find((p) => p.id === id)?.name ?? '不明').join(' / ')
+  swapMode?: boolean
+  selectedId?: string | null
+  onSelectPlayer?: (id: string) => void
 }
 
 function formatTime(ms: number) {
   return new Date(ms).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
 }
 
-export default function MatchHistoryCard({ result, players }: MatchHistoryCardProps) {
+function PlayerLabel({
+  id, players, playerNumbers, swapMode, selectedId, onSelectPlayer,
+}: {
+  id: string
+  players: Player[]
+  playerNumbers: Map<string, number>
+  swapMode?: boolean
+  selectedId?: string | null
+  onSelectPlayer?: (id: string) => void
+}) {
+  const player = players.find((p) => p.id === id)
+  const name = player?.name ?? '不明'
+  const num = playerNumbers.get(id)
+  const isSelected = swapMode && selectedId === id
+  const isTarget = swapMode && selectedId !== null && selectedId !== id
+  return (
+    <button
+      onClick={swapMode ? () => onSelectPlayer?.(id) : undefined}
+      disabled={!swapMode}
+      className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 transition-all text-sm font-semibold ${
+        swapMode
+          ? isSelected
+            ? 'bg-yellow-300 ring-2 ring-yellow-500 shadow-sm'
+            : isTarget
+            ? 'bg-green-100 ring-2 ring-green-400 cursor-pointer shadow-sm'
+            : 'hover:bg-gray-100 cursor-pointer active:bg-gray-200'
+          : 'cursor-default'
+      }`}
+    >
+      {num !== undefined && <span className="text-[10px] text-gray-400 font-mono">#{num}</span>}
+      <span className="text-gray-800">{name}</span>
+    </button>
+  )
+}
+
+export default function MatchHistoryCard({ result, players, swapMode, selectedId, onSelectPlayer }: MatchHistoryCardProps) {
   const updateGameResult = useAppStore((s) => s.updateGameResult)
+  const playerNumbers = usePlayerNumbers()
   const [editing, setEditing] = useState(false)
   const [scoreA, setScoreA] = useState(result.scoreA !== null ? String(result.scoreA) : '')
   const [scoreB, setScoreB] = useState(result.scoreB !== null ? String(result.scoreB) : '')
@@ -67,35 +103,35 @@ export default function MatchHistoryCard({ result, players }: MatchHistoryCardPr
         </div>
       </div>
 
-      {/* ── チーム・スコア行 ── */}
-      <div className="flex items-center px-4 py-3 gap-2">
+      {/* ── チーム行 ── */}
+      <div className="flex items-center px-4 py-2 gap-2">
         {/* チームA */}
-        <div className={`flex-1 flex items-center gap-1.5 ${winA ? 'text-green-700 font-bold' : 'text-gray-600'}`}>
+        <div className="flex-1 flex flex-col gap-1 items-start">
           {winA && <span className="text-base leading-none">🏆</span>}
-          <span className="text-sm">{names(result.sideA, players)}</span>
+          {result.sideA.map((id) => (
+            <PlayerLabel key={id} id={id} players={players} playerNumbers={playerNumbers} swapMode={swapMode} selectedId={selectedId} onSelectPlayer={onSelectPlayer} />
+          ))}
         </div>
 
-        {/* スコア（中央） */}
-        <div className="shrink-0 flex items-center gap-1.5 px-3">
+        {/* VS / スコア */}
+        <div className="shrink-0 flex flex-col items-center gap-0.5">
           {hasScore ? (
             <>
-              <span className={`text-lg font-bold tabular-nums ${winA ? 'text-green-600' : 'text-gray-700'}`}>
-                {result.scoreA}
-              </span>
-              <span className="text-gray-300 font-bold">−</span>
-              <span className={`text-lg font-bold tabular-nums ${winB ? 'text-green-600' : 'text-gray-700'}`}>
-                {result.scoreB}
-              </span>
+              <span className={`text-sm font-bold tabular-nums ${winA ? 'text-green-600' : 'text-gray-500'}`}>{result.scoreA}</span>
+              <span className="text-gray-300 font-bold text-xs">−</span>
+              <span className={`text-sm font-bold tabular-nums ${winB ? 'text-green-600' : 'text-gray-500'}`}>{result.scoreB}</span>
             </>
           ) : (
-            <span className="text-sm font-bold text-gray-200">VS</span>
+            <span className="text-xs font-bold text-gray-300 tracking-widest">VS</span>
           )}
         </div>
 
         {/* チームB */}
-        <div className={`flex-1 flex items-center justify-end gap-1.5 ${winB ? 'text-green-700 font-bold' : 'text-gray-600'}`}>
-          <span className="text-sm text-right">{names(result.sideB, players)}</span>
+        <div className="flex-1 flex flex-col gap-1 items-end">
           {winB && <span className="text-base leading-none">🏆</span>}
+          {result.sideB.map((id) => (
+            <PlayerLabel key={id} id={id} players={players} playerNumbers={playerNumbers} swapMode={swapMode} selectedId={selectedId} onSelectPlayer={onSelectPlayer} />
+          ))}
         </div>
       </div>
 
