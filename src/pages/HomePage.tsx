@@ -29,7 +29,7 @@ export default function HomePage() {
   const [historySwapMode, setHistorySwapMode] = useState(false)
   const [historySelectedId, setHistorySelectedId] = useState<string | null>(null)
   const [showQR, setShowQR] = useState(false)
-  const { sessionId, isSharing, startSession, stopSession } = useSessionSync()
+  const { sessionId, isSharing, startSession, stopSession, isSupabaseEnabled } = useSessionSync()
 
   const handleShareToggle = async () => {
     if (isSharing) {
@@ -143,18 +143,20 @@ export default function HomePage() {
       <div className="flex items-center justify-between pt-1">
         <h1 className="text-lg font-bold text-gray-800">試合管理</h1>
         <div className="flex gap-2">
-          {isSharing && (
+          {isSupabaseEnabled && isSharing && (
             <Button size="sm" variant="secondary" onClick={() => setShowQR(true)}>
               QR
             </Button>
           )}
-          <Button
-            variant={isSharing ? 'danger' : 'secondary'}
-            size="sm"
-            onClick={handleShareToggle}
-          >
-            {isSharing ? '📡 停止' : '📡 共有'}
-          </Button>
+          {isSupabaseEnabled && (
+            <Button
+              variant={isSharing ? 'danger' : 'secondary'}
+              size="sm"
+              onClick={handleShareToggle}
+            >
+              {isSharing ? '📡 停止' : '📡 共有'}
+            </Button>
+          )}
           {hasAnyPlayers && isViewingCurrent && (
             <Button
               variant={swapMode ? 'danger' : 'secondary'}

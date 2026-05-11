@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { supabase } from './supabase'
+import { supabase, isSupabaseEnabled } from './supabase'
 import useAppStore from '@/store/useAppStore'
 import { generateId } from './id'
 import type { ActiveMatch, Player, CourtConfig } from '@/types'
@@ -11,6 +11,7 @@ export interface SessionPayload {
 }
 
 export async function upsertSession(id: string, payload: SessionPayload): Promise<void> {
+  if (!supabase) return
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
   await supabase.from('sessions').upsert({
     id,
@@ -21,6 +22,7 @@ export async function upsertSession(id: string, payload: SessionPayload): Promis
 }
 
 export async function fetchSession(id: string): Promise<SessionPayload | null> {
+  if (!supabase) return null
   const { data, error } = await supabase
     .from('sessions')
     .select('payload')
@@ -31,6 +33,7 @@ export async function fetchSession(id: string): Promise<SessionPayload | null> {
 }
 
 export async function deleteSession(id: string): Promise<void> {
+  if (!supabase) return
   await supabase.from('sessions').delete().eq('id', id)
 }
 
@@ -72,5 +75,5 @@ export function useSessionSync() {
     setIsSharing(false)
   }
 
-  return { sessionId, isSharing, startSession, stopSession }
+  return { sessionId, isSharing, startSession, stopSession, isSupabaseEnabled }
 }
