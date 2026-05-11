@@ -4,7 +4,9 @@ import CourtCard from '@/components/courts/CourtCard'
 import WaitingList from '@/components/matches/WaitingList'
 import MatchHistoryCard from '@/components/history/MatchHistoryCard'
 import Button from '@/components/common/Button'
+import QRModal from '@/components/common/QRModal'
 import { useTimer } from '@/hooks/useTimer'
+import { useSessionSync } from '@/utils/sessionSync'
 
 export default function HomePage() {
   useTimer()
@@ -26,6 +28,18 @@ export default function HomePage() {
   const [viewRound, setViewRound] = useState(0)
   const [historySwapMode, setHistorySwapMode] = useState(false)
   const [historySelectedId, setHistorySelectedId] = useState<string | null>(null)
+  const [showQR, setShowQR] = useState(false)
+  const { sessionId, isSharing, startSession, stopSession } = useSessionSync()
+
+  const handleShareToggle = async () => {
+    if (isSharing) {
+      await stopSession()
+      setShowQR(false)
+    } else {
+      await startSession()
+      setShowQR(true)
+    }
+  }
 
   useEffect(() => {
     setViewRound(currentRound)
@@ -121,11 +135,26 @@ export default function HomePage() {
 
   return (
     <div className="p-3 gap-2 flex flex-col">
+      {sessionId && (
+        <QRModal open={showQR} onClose={() => setShowQR(false)} sessionId={sessionId} />
+      )}
 
       {/* ── ヘッダー ── */}
       <div className="flex items-center justify-between pt-1">
         <h1 className="text-lg font-bold text-gray-800">試合管理</h1>
         <div className="flex gap-2">
+          {isSharing && (
+            <Button size="sm" variant="secondary" onClick={() => setShowQR(true)}>
+              QR
+            </Button>
+          )}
+          <Button
+            variant={isSharing ? 'danger' : 'secondary'}
+            size="sm"
+            onClick={handleShareToggle}
+          >
+            {isSharing ? '📡 停止' : '📡 共有'}
+          </Button>
           {hasAnyPlayers && isViewingCurrent && (
             <Button
               variant={swapMode ? 'danger' : 'secondary'}
