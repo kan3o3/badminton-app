@@ -149,9 +149,9 @@ export default function HomePage() {
               onClick={generateMatches}
               disabled={!canGenerate}
               size="sm"
-              title={unfinishedWithoutScore.length > 0 ? 'スコアを入力してから生成してください' : undefined}
+              title={unfinishedWithoutScore.length > 0 ? 'スコアを入力してから開始してください' : undefined}
             >
-              🏸 生成
+              🏸 開始
             </Button>
           )}
         </div>
@@ -241,7 +241,7 @@ export default function HomePage() {
               <p className="text-gray-500 text-sm font-medium">
                 {activePlayers.length < minPpm
                   ? `選手管理で ${minPpm}人以上を「参加中」にしてください`
-                  : '「生成」ボタンで試合を割り当てます'}
+                  : '「開始」ボタンで試合を割り当てます'}
               </p>
             </div>
           )}
