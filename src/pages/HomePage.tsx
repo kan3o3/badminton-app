@@ -118,10 +118,9 @@ export default function HomePage() {
   )
 
   const sortedMatches = activeMatches.slice().sort((a, b) => a.courtIndex - b.courtIndex)
-  const compact = sortedMatches.length >= 3
 
   return (
-    <div className={`flex flex-col ${compact ? 'p-2 gap-2' : 'p-4 gap-4'}`}>
+    <div className="p-3 gap-2 flex flex-col">
 
       {/* ── ヘッダー ── */}
       <div className="flex items-center justify-between pt-1">
@@ -255,7 +254,6 @@ export default function HomePage() {
               swapMode={swapMode}
               selectedId={selectedId}
               onSelectPlayer={handleSelectPlayer}
-              compact={compact}
             />
           ))}
 
