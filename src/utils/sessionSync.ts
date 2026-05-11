@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase, isSupabaseEnabled } from './supabase'
 import useAppStore from '@/store/useAppStore'
 import { generateId } from './id'
-import type { ActiveMatch, Player, CourtConfig } from '@/types'
+import type { ActiveMatch, Player, CourtConfig, GameResult } from '@/types'
 
 export interface SessionPayload {
   activeMatches: ActiveMatch[]
   players: Pick<Player, 'id' | 'name' | 'gender' | 'rank'>[]
   courtConfig: Pick<CourtConfig, 'format' | 'totalCourts' | 'courtFormats'>
+  currentRound: number
+  gameHistory: GameResult[]
 }
 
 export async function upsertSession(id: string, payload: SessionPayload): Promise<void> {
@@ -43,6 +45,9 @@ export function useSessionSync() {
   const activeMatches = useAppStore((s) => s.activeMatches)
   const players = useAppStore((s) => s.players)
   const courtConfig = useAppStore((s) => s.courtConfig)
+  const currentRound = useAppStore((s) => s.currentRound)
+  const gameHistory = useAppStore((s) => s.gameHistory)
+  const sessionDate = useAppStore((s) => s.sessionDate)
   const syncingRef = useRef(false)
 
   useEffect(() => {
@@ -56,11 +61,13 @@ export function useSessionSync() {
         totalCourts: courtConfig.totalCourts,
         courtFormats: courtConfig.courtFormats,
       },
+      currentRound,
+      gameHistory: gameHistory.filter((r) => r.sessionDate === sessionDate),
     }
     upsertSession(sessionId, payload).finally(() => {
       syncingRef.current = false
     })
-  }, [isSharing, sessionId, activeMatches, players, courtConfig])
+  }, [isSharing, sessionId, activeMatches, players, courtConfig, currentRound, gameHistory, sessionDate])
 
   const startSession = async (): Promise<string> => {
     const id = generateId()

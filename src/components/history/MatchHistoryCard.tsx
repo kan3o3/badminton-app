@@ -9,6 +9,7 @@ interface MatchHistoryCardProps {
   swapMode?: boolean
   selectedId?: string | null
   onSelectPlayer?: (id: string) => void
+  readOnly?: boolean
 }
 
 function formatTime(ms: number) {
@@ -50,7 +51,7 @@ function PlayerLabel({
   )
 }
 
-export default function MatchHistoryCard({ result, players, swapMode, selectedId, onSelectPlayer }: MatchHistoryCardProps) {
+export default function MatchHistoryCard({ result, players, swapMode, selectedId, onSelectPlayer, readOnly }: MatchHistoryCardProps) {
   const updateGameResult = useAppStore((s) => s.updateGameResult)
   const playerNumbers = usePlayerNumbers()
   const [editing, setEditing] = useState(false)
@@ -87,7 +88,7 @@ export default function MatchHistoryCard({ result, players, swapMode, selectedId
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-400">{formatTime(result.playedAt)}</span>
-          {!editing && (
+          {!readOnly && !editing && (
             <button
               onClick={() => setEditing(true)}
               className={`flex items-center gap-1 px-2 py-1 rounded-xl text-sm font-medium border shadow-sm transition-colors ${
@@ -136,7 +137,7 @@ export default function MatchHistoryCard({ result, players, swapMode, selectedId
       </div>
 
       {/* ── 編集パネル ── */}
-      {editing && (
+      {!readOnly && editing && (
         <div className="flex items-center gap-2 px-4 pb-3 pt-2 border-t border-gray-100">
           <input
             type="number" value={scoreA} onChange={(e) => setScoreA(e.target.value)}
