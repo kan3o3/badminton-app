@@ -100,6 +100,7 @@ export default function ViewPage() {
             swapMode={false}
             selectedId={null}
             onSelectPlayer={() => {}}
+            readOnly
           />
         ))
       )}

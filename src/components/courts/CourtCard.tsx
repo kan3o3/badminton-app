@@ -10,6 +10,7 @@ interface CourtCardProps {
   swapMode: boolean
   selectedId: string | null
   onSelectPlayer: (id: string) => void
+  readOnly?: boolean
 }
 
 interface PlayerNameProps {
@@ -77,7 +78,7 @@ function PlayerName({ playerId, players, playerNumbers, swapMode, selected, isTa
   )
 }
 
-export default function CourtCard({ match, players, swapMode: rawSwapMode, selectedId, onSelectPlayer }: CourtCardProps) {
+export default function CourtCard({ match, players, swapMode: rawSwapMode, selectedId, onSelectPlayer, readOnly }: CourtCardProps) {
   const swapMode = rawSwapMode && !match.finished
   const playerNumbers = usePlayerNumbers()
   const [showScore, setShowScore] = useState(false)
@@ -132,9 +133,10 @@ export default function CourtCard({ match, players, swapMode: rawSwapMode, selec
         <div className="flex items-center gap-1.5 shrink-0">
           <span className="text-white font-bold text-sm">コート {match.courtIndex + 1}</span>
           <button
-            onClick={toggleFormat}
+            onClick={readOnly ? undefined : toggleFormat}
+            disabled={readOnly}
             title="形式を切り替え"
-            className="text-xs text-white/80 border border-white/30 rounded-md px-1.5 py-0.5 hover:bg-white/15 active:bg-white/25 leading-tight"
+            className="text-xs text-white/80 border border-white/30 rounded-md px-1.5 py-0.5 hover:bg-white/15 active:bg-white/25 leading-tight disabled:opacity-60 disabled:cursor-default"
           >
             {formatLabel}
           </button>
@@ -159,7 +161,7 @@ export default function CourtCard({ match, players, swapMode: rawSwapMode, selec
                 onReset={() => resetTimer(match.courtIndex)}
               />
             </div>
-            {!swapMode && (
+            {!swapMode && !readOnly && (
               <button
                 onClick={() => finalizeMatch(match.courtIndex)}
                 className="shrink-0 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white text-xs font-bold px-3 py-1.5 rounded-xl"
@@ -205,7 +207,7 @@ export default function CourtCard({ match, players, swapMode: rawSwapMode, selec
       </div>
 
       {/* ── スコア行 ── */}
-      {!swapMode && !match.finished && (
+      {!swapMode && !readOnly && !match.finished && (
         <div className="px-3 pb-3">
           {showScore ? (
             <div className="flex items-center gap-2">
