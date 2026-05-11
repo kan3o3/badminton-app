@@ -120,7 +120,7 @@ export default function HomePage() {
   const sortedMatches = activeMatches.slice().sort((a, b) => a.courtIndex - b.courtIndex)
 
   return (
-    <div className="p-3 flex flex-col gap-3">
+    <div className="p-4 flex flex-col gap-4">
 
       {/* ── ヘッダー ── */}
       <div className="flex items-center justify-between pt-1">
