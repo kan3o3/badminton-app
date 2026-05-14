@@ -52,7 +52,7 @@ export default function PlayerList({ players, gameCounts, onEdit, onDelete, onSt
   return (
     <div>
       {/* 名前検索 */}
-      <div className="mb-3">
+      <div className="mb-2">
         <input
           type="text"
           value={searchQuery}
@@ -63,12 +63,12 @@ export default function PlayerList({ players, gameCounts, onEdit, onDelete, onSt
       </div>
 
       {/* ソート */}
-      <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1">
+      <div className="flex gap-1 mb-2 overflow-x-auto pb-1">
         {sortOptions.map(({ value, label }) => (
           <button
             key={value}
             onClick={() => setSortBy(value)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+            className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
               sortBy === value
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
@@ -80,19 +80,19 @@ export default function PlayerList({ players, gameCounts, onEdit, onDelete, onSt
       </div>
 
       {/* ステータスフィルター */}
-      <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
+      <div className="flex gap-1 mb-3 overflow-x-auto pb-1">
         {filters.map(({ value, label }) => (
           <button
             key={value}
             onClick={() => setFilter(value)}
-            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+            className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
               filter === value
                 ? 'bg-green-600 text-white shadow-sm'
                 : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
             }`}
           >
             {label}
-            <span className={`ml-1 text-sm ${filter === value ? 'opacity-80' : 'opacity-50'}`}>
+            <span className={`ml-0.5 text-xs ${filter === value ? 'opacity-80' : 'opacity-50'}`}>
               {value === 'all' ? players.length : players.filter((p) => p.status === value).length}
             </span>
           </button>
@@ -106,7 +106,7 @@ export default function PlayerList({ players, gameCounts, onEdit, onDelete, onSt
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {sorted.map((player) => (
             <PlayerCard
               key={player.id}

@@ -27,15 +27,15 @@ export default function RankingTable({ stats, players }: RankingTableProps) {
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-base">
+        <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-100">
-              <th className="text-left px-3 py-3 text-gray-600 font-medium w-6">#</th>
-              <th className="text-left px-3 py-3 text-gray-600 font-medium">選手</th>
+              <th className="text-left px-2 py-2 text-gray-600 font-medium w-6">#</th>
+              <th className="text-left px-2 py-2 text-gray-600 font-medium">選手</th>
               {columns.map(({ key, label }) => (
                 <th
                   key={key}
-                  className={`px-3 py-3 text-right cursor-pointer font-medium transition-colors ${
+                  className={`px-2 py-2 text-right cursor-pointer font-medium transition-colors ${
                     sortKey === key ? 'text-green-600 bg-green-50' : 'text-gray-500 hover:text-gray-700'
                   }`}
                   onClick={() => setSortKey(key)}
@@ -51,19 +51,19 @@ export default function RankingTable({ stats, players }: RankingTableProps) {
               const player = players.find((p) => p.id === s.playerId)
               return (
                 <tr key={s.playerId} className={idx === 0 ? 'bg-yellow-50/50' : ''}>
-                  <td className="px-3 py-3 text-gray-400 text-sm">{idx + 1}</td>
-                  <td className="px-3 py-3">
+                  <td className="px-2 py-2 text-gray-400 text-xs">{idx + 1}</td>
+                  <td className="px-2 py-2">
                     <span className="font-medium text-gray-800">{player?.name ?? '不明'}</span>
                     {player?.rank && (
                       <span className="ml-1 text-xs bg-blue-100 text-blue-600 px-1 rounded">{player.rank}</span>
                     )}
                   </td>
-                  <td className="px-3 py-3 text-right text-gray-700">{s.gamesPlayed}</td>
-                  <td className="px-3 py-3 text-right text-gray-700">{s.wins}</td>
-                  <td className="px-3 py-3 text-right text-gray-700">
+                  <td className="px-2 py-2 text-right text-gray-700">{s.gamesPlayed}</td>
+                  <td className="px-2 py-2 text-right text-gray-700">{s.wins}</td>
+                  <td className="px-2 py-2 text-right text-gray-700">
                     {s.wins + s.losses > 0 ? `${Math.round(s.winRate * 100)}%` : '−'}
                   </td>
-                  <td className={`px-3 py-3 text-right font-medium ${s.pointDiff > 0 ? 'text-green-600' : s.pointDiff < 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                  <td className={`px-2 py-2 text-right font-medium ${s.pointDiff > 0 ? 'text-green-600' : s.pointDiff < 0 ? 'text-red-500' : 'text-gray-500'}`}>
                     {s.pointDiff > 0 ? '+' : ''}{s.pointDiff || '−'}
                   </td>
                 </tr>

@@ -57,7 +57,7 @@ export default function PlayerCard({ player, gameCount, playerNumber, onEdit, on
         ${selected ? 'ring-2 ring-blue-400' : ''}
       `}
     >
-      <div className="px-4 py-3 flex items-center gap-3">
+      <div className="px-3 py-2 flex items-center gap-2.5">
         {/* チェックボックス（bulkMode時）/ ステータスドット（通常時） */}
         {bulkMode ? (
           <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
@@ -88,7 +88,7 @@ export default function PlayerCard({ player, gameCount, playerNumber, onEdit, on
             {playerNumber !== undefined && (
               <span className="text-sm bg-gray-100 text-gray-600 font-bold px-1.5 py-0.5 rounded-md font-mono flex-shrink-0">#{playerNumber}</span>
             )}
-            <span className="font-semibold text-gray-800 truncate">{player.name}</span>
+            <span className="text-sm font-semibold text-gray-800 truncate">{player.name}</span>
             {player.rank && (
               <span className="text-sm bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-lg font-bold leading-none">
                 {player.rank}
@@ -105,22 +105,22 @@ export default function PlayerCard({ player, gameCount, playerNumber, onEdit, on
               </span>
             )}
           </div>
-          <div className="text-sm text-gray-500 font-medium mt-0.5">{gameCount}試合</div>
+          <div className="text-xs text-gray-400 font-medium mt-0.5">{gameCount}試合</div>
         </div>
 
         {/* 編集・削除 */}
         {!bulkMode && (
-          <div className="flex gap-1 flex-shrink-0">
+          <div className="flex gap-0.5 flex-shrink-0">
             <button
               onClick={onEdit}
-              className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 hover:text-gray-600 text-base"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 text-sm"
               aria-label="編集"
             >
               ✏️
             </button>
             <button
               onClick={onDelete}
-              className="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-400 text-base"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-400 text-sm"
               aria-label="削除"
             >
               🗑️
@@ -130,12 +130,12 @@ export default function PlayerCard({ player, gameCount, playerNumber, onEdit, on
       </div>
 
       {pickerOpen && !bulkMode && (
-        <div className="border-t border-gray-100 px-4 py-2.5 flex gap-2 bg-gray-50">
+        <div className="border-t border-gray-100 px-3 py-2 flex gap-1.5 bg-gray-50">
           {STATUS_OPTIONS.map(({ value, label, active, inactive }) => (
             <button
               key={value}
               onClick={() => handleStatusSelect(value)}
-              className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${
+              className={`flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 player.status === value ? active : inactive
               }`}
             >

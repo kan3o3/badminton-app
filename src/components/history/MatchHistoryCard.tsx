@@ -35,7 +35,7 @@ function PlayerLabel({
     <button
       onClick={swapMode ? () => onSelectPlayer?.(id) : undefined}
       disabled={!swapMode}
-      className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 transition-all text-sm font-semibold ${
+      className={`inline-flex items-center gap-1 rounded-xl px-2 py-1 transition-all text-sm font-semibold ${
         swapMode
           ? isSelected
             ? 'bg-yellow-300 ring-2 ring-yellow-500 shadow-sm'

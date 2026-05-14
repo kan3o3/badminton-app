@@ -42,8 +42,8 @@ export default function PairSection({ players, pairs, addPair, deletePair }: Pai
   const getPlayer = (id: string) => players.find((p) => p.id === id)
 
   return (
-    <div className="mt-6">
-      <div className="flex items-center justify-between mb-3">
+    <div className="mt-4">
+      <div className="flex items-center justify-between mb-2">
         <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest">固定ペア</h2>
         {!selecting && (
           <button
@@ -56,18 +56,18 @@ export default function PairSection({ players, pairs, addPair, deletePair }: Pai
       </div>
 
       {pairs.length === 0 && !selecting && (
-        <div className="bg-white rounded-2xl px-4 py-4 shadow-sm text-center">
+        <div className="bg-white rounded-2xl px-4 py-3 shadow-sm text-center">
           <p className="text-sm text-gray-400">固定ペアはまだ登録されていません</p>
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {pairs.map((pair) => {
           const [id1, id2] = pair.playerIds
           const p1 = getPlayer(id1)
           const p2 = getPlayer(id2)
           return (
-            <div key={pair.id} className="bg-white rounded-2xl px-4 py-3 shadow-sm flex items-center gap-3">
+            <div key={pair.id} className="bg-white rounded-2xl px-3 py-2 shadow-sm flex items-center gap-2.5">
               <div className="flex-1 flex items-center gap-2">
                 <span className="text-sm font-semibold text-gray-800">{p1?.name ?? '?'}</span>
                 {p1?.rank && (

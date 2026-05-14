@@ -97,8 +97,8 @@ export default function PlayersPage() {
 
   return (
     <div className="p-4">
-      <div className="flex items-center justify-between mb-3 pt-1">
-        <h1 className="text-xl font-bold text-gray-800">選手管理</h1>
+      <div className="flex items-center justify-between mb-2 pt-1">
+        <h1 className="text-lg font-bold text-gray-800">選手管理</h1>
         <div className="flex gap-2">
           {players.length > 0 && (
             bulkMode ? (

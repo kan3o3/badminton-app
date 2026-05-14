@@ -49,7 +49,7 @@ export default function HistoryPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-bold text-gray-800 mb-4">結果・順位</h1>
+      <h1 className="text-lg font-bold text-gray-800 mb-3">結果・順位</h1>
 
       {/* View toggle */}
       <div className="flex bg-gray-200 rounded-xl p-1 mb-4">
