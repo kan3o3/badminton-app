@@ -33,23 +33,23 @@ function Stepper({
   format?: (v: number) => string
 }) {
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
-      <span className="font-medium text-gray-700">{label}</span>
-      <div className="flex items-center gap-3">
+    <div className="bg-white rounded-xl p-3 shadow-sm flex items-center justify-between">
+      <span className="text-sm font-medium text-gray-700">{label}</span>
+      <div className="flex items-center gap-2">
         <button
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
-          className="w-9 h-9 rounded-full bg-gray-100 text-xl font-bold flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 active:bg-gray-300 text-gray-600"
+          className="w-8 h-8 rounded-full bg-gray-100 text-lg font-bold flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 active:bg-gray-300 text-gray-600"
         >
           −
         </button>
-        <span className="w-16 text-center text-base font-bold text-gray-800">
+        <span className="w-14 text-center text-sm font-bold text-gray-800">
           {format ? format(value) : value}
         </span>
         <button
           onClick={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
-          className="w-9 h-9 rounded-full bg-gray-100 text-xl font-bold flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 active:bg-gray-300 text-gray-600"
+          className="w-8 h-8 rounded-full bg-gray-100 text-lg font-bold flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 active:bg-gray-300 text-gray-600"
         >
           ＋
         </button>
@@ -62,10 +62,10 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   return (
     <button
       onClick={() => onChange(!value)}
-      className={`relative w-12 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${value ? 'bg-green-500' : 'bg-gray-300'}`}
+      className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${value ? 'bg-green-500' : 'bg-gray-300'}`}
     >
       <span
-        style={{ transform: value ? 'translateX(26px)' : 'translateX(2px)' }}
+        style={{ transform: value ? 'translateX(23px)' : 'translateX(2px)' }}
         className="absolute top-0.5 left-0 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200"
       />
     </button>
@@ -81,7 +81,7 @@ function formatTimer(seconds: number) {
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest px-1 mb-2 mt-5">{children}</h2>
+    <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1 mb-1.5 mt-4">{children}</h2>
   )
 }
 
@@ -105,11 +105,11 @@ export default function SettingsPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-xl font-bold text-gray-800 mb-1 pt-1">設定</h1>
+      <h1 className="text-lg font-bold text-gray-800 mb-1 pt-1">設定</h1>
 
       {/* ── コート設定 ── */}
       <SectionHeader>コート</SectionHeader>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Stepper
           label="コート数"
           value={courtConfig.totalCourts}
@@ -119,15 +119,15 @@ export default function SettingsPage() {
           format={(v) => `${v}面`}
         />
 
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <p className="font-medium text-gray-700 mb-0.5">デフォルト形式</p>
-          <p className="text-sm text-gray-400 mb-3">コート個別に設定していない場合に適用</p>
+        <div className="bg-white rounded-xl p-3 shadow-sm">
+          <p className="text-sm font-medium text-gray-700 mb-0.5">デフォルト形式</p>
+          <p className="text-xs text-gray-400 mb-2">コート個別に設定していない場合に適用</p>
           <div className="flex gap-2">
             {(['doubles', 'singles'] as const).map((fmt) => (
               <button
                 key={fmt}
                 onClick={() => setCourtConfig({ format: fmt })}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${
                   courtConfig.format === fmt
                     ? 'bg-green-600 text-white shadow-sm'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -140,20 +140,20 @@ export default function SettingsPage() {
         </div>
 
         {courtConfig.totalCourts > 1 && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="font-medium text-gray-700 mb-3">コート別形式</p>
-            <div className="space-y-2.5">
+          <div className="bg-white rounded-xl p-3 shadow-sm">
+            <p className="text-sm font-medium text-gray-700 mb-2">コート別形式</p>
+            <div className="space-y-2">
               {Array.from({ length: courtConfig.totalCourts }, (_, i) => {
                 const fmt = courtConfig.courtFormats[i] ?? courtConfig.format
                 return (
                   <div key={i} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 font-medium">コート {i + 1}</span>
-                    <div className="flex gap-1.5">
+                    <span className="text-xs text-gray-600 font-medium">コート {i + 1}</span>
+                    <div className="flex gap-1">
                       {(['doubles', 'singles'] as const).map((f) => (
                         <button
                           key={f}
                           onClick={() => setCourtFormat(i, f)}
-                          className={`px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors ${
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
                             fmt === f
                               ? 'bg-green-600 text-white shadow-sm'
                               : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -169,18 +169,17 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
-      </div>
 
         {/* 性別形式 */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm mt-2">
-          <p className="font-medium text-gray-700 mb-0.5">デフォルト性別形式</p>
-          <p className="text-sm text-gray-400 mb-3">コート個別に設定していない場合に適用</p>
-          <div className="flex gap-2">
+        <div className="bg-white rounded-xl p-3 shadow-sm">
+          <p className="text-sm font-medium text-gray-700 mb-0.5">デフォルト性別形式</p>
+          <p className="text-xs text-gray-400 mb-2">コート個別に設定していない場合に適用</p>
+          <div className="flex gap-1.5">
             {(courtConfig.format === 'singles' ? GENDER_FORMAT_OPTIONS_SINGLES : GENDER_FORMAT_OPTIONS_DOUBLES).map(({ value, label }) => (
               <button
                 key={value}
                 onClick={() => setCourtConfig({ genderFormat: value })}
-                className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   (courtConfig.genderFormat ?? 'any') === value
                     ? 'bg-green-600 text-white shadow-sm'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -193,22 +192,22 @@ export default function SettingsPage() {
         </div>
 
         {courtConfig.totalCourts > 1 && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm mt-2">
-            <p className="font-medium text-gray-700 mb-3">コート別性別形式</p>
-            <div className="space-y-2.5">
+          <div className="bg-white rounded-xl p-3 shadow-sm">
+            <p className="text-sm font-medium text-gray-700 mb-2">コート別性別形式</p>
+            <div className="space-y-2">
               {Array.from({ length: courtConfig.totalCourts }, (_, i) => {
                 const gfmt = (courtConfig.courtGenderFormats ?? [])[i] ?? (courtConfig.genderFormat ?? 'any')
                 const courtFmt = courtConfig.courtFormats[i] ?? courtConfig.format
                 const genderOptions = courtFmt === 'singles' ? GENDER_FORMAT_OPTIONS_SINGLES : GENDER_FORMAT_OPTIONS_DOUBLES
                 return (
                   <div key={i} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 font-medium">コート {i + 1}</span>
+                    <span className="text-xs text-gray-600 font-medium">コート {i + 1}</span>
                     <div className="flex gap-1">
                       {genderOptions.map(({ value, label }) => (
                         <button
                           key={value}
                           onClick={() => setGenderFormat(i, value)}
-                          className={`px-2 py-1.5 rounded-xl text-sm font-semibold transition-colors ${
+                          className={`px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${
                             gfmt === value
                               ? 'bg-green-600 text-white shadow-sm'
                               : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -224,10 +223,11 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
+      </div>
 
       {/* ── 試合設定 ── */}
       <SectionHeader>試合</SectionHeader>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Stepper
           label="試合時間"
           value={courtConfig.timerDefaultSeconds / 60}
@@ -237,10 +237,10 @@ export default function SettingsPage() {
           format={(v) => formatTimer(v * 60)}
         />
 
-        <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-xl p-3 shadow-sm flex items-center justify-between">
           <div>
-            <p className="font-medium text-gray-700">レベル差を考慮した組み合わせ</p>
-            <p className="text-sm text-gray-400 mt-0.5">OFFにするとランクを無視してマッチング</p>
+            <p className="text-sm font-medium text-gray-700">レベル差を考慮した組み合わせ</p>
+            <p className="text-xs text-gray-400 mt-0.5">OFFにするとランクを無視してマッチング</p>
           </div>
           <Toggle
             value={rankBalanceEnabled}
@@ -248,10 +248,10 @@ export default function SettingsPage() {
           />
         </div>
 
-        <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-xl p-3 shadow-sm flex items-center justify-between">
           <div>
-            <p className="font-medium text-gray-700">スコア記入</p>
-            <p className="text-sm text-gray-400 mt-0.5">ONにするとスコア未入力のまま次の試合を生成できない</p>
+            <p className="text-sm font-medium text-gray-700">スコア記入</p>
+            <p className="text-xs text-gray-400 mt-0.5">ONにするとスコア未入力のまま次の試合を生成できない</p>
           </div>
           <Toggle
             value={courtConfig.requireScore ?? false}
@@ -262,8 +262,8 @@ export default function SettingsPage() {
 
       {/* ── セッション ── */}
       <SectionHeader>セッション</SectionHeader>
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
-        <p className="text-sm text-gray-500 mb-3">
+      <div className="bg-white rounded-xl p-3 shadow-sm">
+        <p className="text-xs text-gray-500 mb-2.5">
           試合履歴・進行中のコートをすべてリセットします。
           {activeMatches.length > 0 && (
             <span className="text-orange-500 font-medium">（進行中の試合があります）</span>
